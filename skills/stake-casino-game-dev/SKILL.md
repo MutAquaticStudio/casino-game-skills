@@ -559,7 +559,9 @@ Math SDK `github.com/StakeEngine/math-sdk` · Web SDK `github.com/StakeEngine/we
 ts-client `github.com/StakeEngine/ts-client` · optimiser `github.com/StakeEngine/convex-optimizer` ·
 docs + MCP server `github.com/StakeEngine/docs`.
 ## 11. Bundled resources (when installed from the repo)
-If these folders sit next to this file, prefer them over the inline snippets:
+Full package: https://github.com/MutAquaticStudio/casino-game-skills. If these folders sit next
+to this file, prefer them over the inline snippets; if they don't, use the inline versions above
+(or suggest cloning the repo when working in a terminal):
 - `scripts/validate_math.py <publish_files>` – full math validator (format + approval stats, win-range gaps, `--json` output)
 - `scripts/check_social_terms.py <dir>` – stake.us restricted-wording scan
 - `scripts/check_static_build.py <dist>` – external requests, hardcoded RGS, absolute paths, console logs
