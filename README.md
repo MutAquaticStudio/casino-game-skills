@@ -88,6 +88,11 @@ Script kiểm tra định dạng `index.json`, sự khớp giữa lookup table v
 ### Bước 3 – Frontend
 Skill có mục riêng cho **PixiJS 8.22** (bản mới nhất, kiểm tra tháng 11/2026): các mẫu code v8 đúng chuẩn, kiến trúc game slot (guồng quay, symbol Spine, tumble, các lớp hiển thị), ngân sách hiệu năng trên điện thoại, các thay đổi từ 8.16 đến 8.22 dễ gây lỗi, và bộ 26 skill PixiJS chính thức đi kèm. Mục riêng cho Three.js dành cho game 3D.
 
+Phần **Bet UI / HUD** (mục 13) rút ra từ 4 game của 4 studio khác nhau: nguyên tắc đơn giản trước (khoảng 5–8 nút cố định, nút quay là yếu tố duy nhất nổi bật, giá trị chỉ là chữ trên nền phẳng, không khung trang trí), 3 kiểu bố cục (dải dưới đáy, cụm nút nổi, cột nút hai bên), thông số tỷ lệ theo chiều cao màn hình, quy tắc cho ante/mode/autoplay theo luật Stake, và các bản cho popout, điện thoại dọc và ngang.
+
+```
+Thiết kế Bet UI cho game này theo kiểu dải điều khiển dưới đáy, tối giản, có bản popout 400x225.
+```
 ```
 Guồng quay của tôi bị giật khi dừng và rớt FPS lúc Big Win trên điện thoại. Tối ưu theo PixiJS 8 mới nhất.
 ```

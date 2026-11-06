@@ -84,6 +84,11 @@ bet mode switches (base ↔ boost ↔ bonus buy); entering/leaving replay.
 - Measure against `stake-casino-game-dev` §13: dock ≈ 9–12% H, spin ≈ 1.3–1.6× dock height and
   the most prominent element, secondary buttons ≈ 0.5–0.65× spin, value text ≈ 1.5× label text,
   win cell reserved at 0 (no layout jump).
+- Simplicity (`stake-casino-game-dev` §13.0): about 5–8 persistent controls, spin is the single
+  hero element, values are plain label + number (no ornate frames), one icon style and one corner
+  radius, no idle HUD animation, secondary options live in the menu. Deduct for an over-designed
+  HUD: decorative frames around numbers, many competing buttons or accents, looping glow or
+  particles on the HUD, a themed layout where spin/bet are hard to find (cover-the-board test).
 - Text/icons over art have a backing or scrim; no thin outline icons straight on busy art.
 - Flag as blockers: ante/feature toggles costing > 2× without a confirmation step,
   hold-to-spin / hold-space continuous spinning, autoplay that starts on one tap, missing bet

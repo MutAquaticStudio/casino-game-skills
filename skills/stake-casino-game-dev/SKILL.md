@@ -724,6 +724,27 @@ stage
 Learned from a reference set of live slots from four different studios (Nov 2026). Use the
 patterns, not the look: build an original skin – copying another studio's UI risks rejection.
 
+### 13.0 Simplicity first (the common thread in all four references)
+All four studios ship a **very plain** Bet UI: a handful of flat controls, one dominant spin
+button, no ornate frames. The theme lives in the board, symbols, background and effects – not
+in the HUD. This is a design guideline from the samples, not a Stake rule, but treat it as the
+default; every extra element has to earn its place.
+- **Control budget:** about 5–8 persistent elements on screen (spin, bet, balance, win,
+  autoplay, menu, plus at most one of turbo / mode button). Everything else (sound, info, paytable,
+  settings, history, turbo on small screens) goes inside the menu.
+- **One hero:** spin is the only large, high-contrast element; nothing else competes with it.
+- **Values are plain text:** balance, win and bet are a label + number on a flat translucent
+  panel or a scrim – no gem/metal/wood frames around numbers, no per-value ornaments.
+- **Flat, consistent shapes:** one corner radius, one icon style (filled or outline, not both),
+  one accent colour for spin and one for the feature/mode button.
+- **Quiet at idle:** no looping decorative animation, glow or particles on the HUD while the
+  player isn't interacting; motion is reserved for state changes (spin, win roll-up, mode switch).
+- **Skin lightly:** tint the panel colour, accent and icon glyphs to the theme; keep standard
+  positions and shapes. If a themed HUD makes the player hunt for spin or bet, it is over-designed.
+- **Progressive disclosure:** pickers (bet levels, autoplay setup, mode list) open on demand;
+  don't permanently show options the player uses once per session.
+- Test: cover the board – can a new player still name each control within two seconds?
+
 ### 13.1 Three proven layout archetypes
 | Archetype | Layout | Strengths | Watch out for |
 |---|---|---|---|
@@ -785,7 +806,8 @@ Default for Stake games: **A** for desktop/popout (safest for approval and the 4
 - Colour roles: one accent for the primary action (spin), one for feature/buy; states via
   fill vs outline; disabled ≈ 40% opacity; animate the spin ring while spinning.
 - Typography: a sturdy UI sans for labels/values; the theme display font only for logo/titles.
-- Skin with restraint: wood/metal/fabric trims and themed icons are welcome, but keep the
-  conventional positions and shapes so players instantly find spin, bet and balance.
+- Skin with restraint (see §13.0): a subtle material hint on the dock edge and themed icon
+  glyphs are enough; keep the conventional positions and shapes so players instantly find spin,
+  bet and balance.
 - Localization: labels grow (de/fi/ru); test the longest value (e.g. "¥150,000,000"). Social mode:
   "BET" → "PLAY AMOUNT"/"PLAY", "CREDIT" → "BALANCE"/"COINS", "BUY" → "GET"; no "AutoBET".
