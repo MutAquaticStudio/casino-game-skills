@@ -86,6 +86,14 @@ python skills/stake-casino-game-dev/scripts/validate_math.py <dir> --json report
 Script kiểm tra định dạng `index.json`, sự khớp giữa lookup table và books, RTP 90–98%, chênh lệch RTP giữa các mode ≤ 0.5%, tần suất max win (≥ 1/20 triệu), hit-rate, kết quả áp đảo, và khoảng trống trong dải tiền thắng.
 
 ### Bước 3 – Frontend
+Skill có mục riêng cho **PixiJS 8.22** (bản mới nhất, kiểm tra tháng 11/2026): các mẫu code v8 đúng chuẩn, kiến trúc game slot (guồng quay, symbol Spine, tumble, các lớp hiển thị), ngân sách hiệu năng trên điện thoại, các thay đổi từ 8.16 đến 8.22 dễ gây lỗi, và bộ 26 skill PixiJS chính thức đi kèm. Mục riêng cho Three.js dành cho game 3D.
+
+```
+Guồng quay của tôi bị giật khi dừng và rớt FPS lúc Big Win trên điện thoại. Tối ưu theo PixiJS 8 mới nhất.
+```
+```
+Nâng project Web SDK từ pixi.js 8.8.1 lên bản mới nhất, liệt kê những gì cần test lại.
+```
 ```
 Dựng frontend PixiJS 8 + Svelte 5 cho game này, dùng rgs-client.ts và book-player.ts
 trong skill, có xử lý replay và social mode.
@@ -215,12 +223,13 @@ skills/
 │   ├── SKILL.md
 │   ├── scripts/        validate_math.py, check_social_terms.py, check_static_build.py
 │   ├── assets/         rgs-client.ts, book-player.ts
-│   └── references/     stake-engine/*.md, threejs/, gamedev/
+│   └── references/     stake-engine/*.md, pixijs/ (skill PixiJS chính thức), threejs/, gamedev/
 ├── casino-game-audit/SKILL.md
 └── casino-audio-design/SKILL.md
 ```
 
 ## 9. Nguồn và giấy phép
 - Tài liệu và SDK của Stake Engine: https://github.com/StakeEngine (Math SDK dùng giấy phép MIT). Dự án này không liên kết với Stake hay Stake Engine.
+- Skill PixiJS chính thức lấy từ gói npm `pixi.js@8.22.0` ([pixijs/pixijs](https://github.com/pixijs/pixijs)), giấy phép MIT, xem `references/pixijs/vendor/LICENSE`.
 - Hướng dẫn Three.js lấy từ [CloudAI-X/threejs-skills](https://github.com/cloudai-x/threejs-skills), giấy phép MIT, xem `references/threejs/vendor/LICENSE`.
 - Hướng dẫn game dev lấy từ [gamedev-skills/awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills), giấy phép Apache-2.0, xem `references/gamedev/vendor/LICENSE` và `NOTICE`.
