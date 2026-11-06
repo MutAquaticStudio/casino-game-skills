@@ -1,0 +1,141 @@
+---
+name: "casino-symbol-art"
+description: "Create and export 2D art for casino/slot games on PixiJS: slot symbols (low/high pay, Wild, Scatter, Bonus, card ranks), state variants, win-title art, reel frames, backgrounds and icons as layered SVG, with a style guide, readability checks at real reel size, lint for Stake-safe files, and spritesheet export for Pixi v8. Use for any request to design, draw, redo or produce symbols or other 2D assets for a slot, even if the user does not say SVG or Pixi."
+---
+
+# Casino symbol art
+
+Players judge a slot by its art in the first two seconds, and Stake reviewers reject art that is
+not unique. This skill produces the assets: a style guide, layered SVG symbols, a checked
+preview, and a Pixi-ready atlas. `casino-game-audit` scores the result;
+`stake-casino-game-dev` wires it into the game (§12 Pixi, §8 win celebrations). Answer in the
+user's language; keep file names, code and Stake terms in English.
+
+**Hard constraints (Stake approval)**
+- Unique, IP-clean art. No copyrighted characters, logos or mascots, no Stake/Kick branding, no
+  Web SDK sample assets. If the user asks for a known character or brand, decline that part and
+  offer an original design with the same spirit.
+- Static build: assets under relative paths, no remote images, no font CDNs. Text becomes
+  paths (or a bitmap font), never `<text>`.
+- Readable in the 400×225 popout and on a phone: judge every symbol at its real on-screen size.
+
+**What this makes, and what it doesn't.** Vector and procedural art: flat, glossy casino,
+bevelled gems and coins, ornate frames, card ranks, icons, themed titles. It does not replace
+painterly hand art or photoreal rendering. If the user wants that look, write an art brief
+for an artist (see `references/symbol-design.md` §7) and use this skill for the pipeline.
+
+## 1. Style guide first
+Lock these before the first symbol, then save them as `art/style.json` so every later asset
+reuses the same values. Skipping this is the main reason a set looks like five different games.
+
+| Field | Decide |
+|---|---|
+| Theme + mood | one line, e.g. "Viet myth, warm lacquer and gold" |
+| Render style | flat · glossy casino (rim light + gradient + gloss) · outlined chibi |
+| Palette | 6–8 hex values + one accent reserved for Wild/Bonus |
+| Outline | width on the source canvas and colour (dark tone of the fill, not pure black) |
+| Light | one direction for every highlight and shadow (default top-left) |
+| Canvas | symbol cell on the source art, e.g. 256×256 with ≥ 8% padding for glow |
+| Real size | on-screen px of a symbol (e.g. 140) and the popout size; this is the readability target |
+
+Palette starters per theme and a `style.json` template: `references/symbol-design.md` §1.
+
+## 2. Plan the set
+List every asset with its role before drawing. Role sets the detail level and the visual weight.
+
+| Tier | Typical count | Treatment |
+|---|---|---|
+| Low pay (card ranks or simple glyphs) | 4–5 | Flat, one or two colours, thick shapes, least detail |
+| High pay (theme objects/characters) | 4–5 | More detail, richer gradient, rim light |
+| Wild | 1 (+ variants) | Accent colour, glow, fills the cell |
+| Scatter / Bonus | 1–2 | Unique silhouette, distinct from Wild even in greyscale |
+| Specials from the concept (multiplier, coin, mystery) | per design | Follow the mechanic; show its value legibly |
+
+Every symbol needs the states the Pixi `SymbolView` uses (`idle | spin | land | win | dim`,
+see `stake-casino-game-dev` §12.3). Most states are code (blur, scale, tint, glow); draw extra
+art only for `win` when the symbol needs a real animation. Details and timings:
+`references/symbol-design.md` §4.
+
+## 3. Draw each symbol as SVG
+One file per asset, `art/svg/<name>.svg`:
+- Fixed `viewBox` shared by the whole set (e.g. `0 0 256 256`). A mixed set cannot be packed
+  with consistent anchors.
+- Named layers as `<g id="body|shade|highlight|glow|detail">`. These names let the same file be
+  split into layers later for Spine or frame animation, so use them even for static symbols.
+- Gradients, filters and clip paths get an id prefixed with the file name (`ruby-body`).
+  Duplicate ids make colours wrong when SVGs are inlined or merged.
+- Filter regions wide enough (`x="-20%" y="-20%" width="140%" height="140%"`) and a canvas
+  with padding, otherwise glows are cut to a hard box.
+- Use palette values from `style.json`; do not invent hex codes mid-set.
+- Silhouette first: the shape must identify the symbol before colour or detail does.
+
+## 4. Check before showing anyone
+```bash
+python3 scripts/svg_to_atlas.py lint    art/svg
+python3 scripts/svg_to_atlas.py preview art/svg --out art/preview.png --cell 256 --shrink 140
+```
+`lint` flags remote references, `<text>`, scripts, missing viewBox, id collisions and a mixed
+canvas. `preview` draws each symbol full size on a checkerboard and again at the real reel size
+on a dark strip. **Open `preview.png` and look at it**; code that renders is not the same as
+art that works. Check:
+1. Each symbol still reads at the real size (shrink strip) and at popout size. In a 400×225
+   popout a 3–5 row board leaves roughly 36–60 px per symbol (assuming the board fills ~80%
+   of the height), so re-run `preview` with `--shrink 40` as the harsh test.
+2. Contrast against the reel background; nothing disappears into it.
+3. Same light direction, outline width and level of finish across the set.
+4. Hierarchy: high pay clearly richer than low pay; Wild and Scatter unmistakable.
+5. Greyscale test: Wild, Scatter and Bonus stay distinguishable without colour.
+6. No clipped glow or outline at the cell edge.
+
+Send the preview to the user after the first two or three symbols, not at the end. Direction
+changes are cheap early and expensive after twelve symbols.
+
+## 5. Export for Pixi
+```bash
+python3 scripts/svg_to_atlas.py build art/svg --out public/assets/symbols --size 160 --scales 1,2
+```
+Writes `symbols@1x.json/.png` and `symbols@2x.json/.png`, TexturePacker-style JSON with
+`meta.scale`, a default 0.5/0.5 anchor and untrimmed frames, so every symbol shares one cell.
+Frame names are the file names (`ruby`, `wild`). Validated against PixiJS 8.22: `Assets` resolves
+`symbols@{1,2}x.json` by device pixel ratio and sprites keep their logical size.
+
+- **Pick `--size` from the real on-screen size**: logical cell ≈ on-screen px; the `@2x` file
+  covers retina. A 140px reel symbol needs `--size 160 --scales 1,2` (320px sheet), not 256/512.
+  Oversized cells are the usual reason an atlas will not fit.
+- Atlas budget: ≤ 2048 px per side is safe on mobile, 4096 is the upper bound. The script says
+  so and stops when a set does not fit; split base symbols from bonus symbols into separate
+  atlases and bundles (`Assets.loadBundle('bonus')` lazily).
+- `--format webp` is much smaller than PNG and fine for symbols. Add `--pot` only for tools that
+  need power-of-two sides; the default is tight and a multiple of 4 (KTX2-friendly).
+- Raster atlases beat live SVG in Pixi for reels (batching, no re-rasterising). Pixi's
+  Graphics mode for SVG skips filters, clip paths and `<style>`, which glossy symbols rely on,
+  so rasterise (`references/export-and-pixi.md` §4).
+- Need a real animation (Spine or frames)? `python3 scripts/svg_to_atlas.py layers art/svg
+  --out art/layers` exports each named `<g>` as a full-canvas PNG, already registered to the
+  others, ready to import as Spine slots (`references/export-and-pixi.md` §6).
+
+Loading code, a `SymbolView` sketch, Spine hand-off and the bundle layout:
+`references/export-and-pixi.md`.
+
+## 6. Other 2D assets
+Same loop (style guide → SVG → preview → export), different canvases. Sizes and rules per asset
+are in `references/symbol-design.md` §6:
+reel frame and board (9-slice friendly), background (≥ 2 parallax layers, kept calm behind the
+reels), win-tier title art (Big / Mega / Epic / Legendary / Max Win, from `stake-casino-game-dev`
+§8), HUD icons (follow the simplicity-first rule in §13.0 there), loading logo, thumbnail.
+
+## 7. Hand-off
+Deliver the folder, not loose files: `art/style.json`, `art/svg/`, `art/preview.png`,
+`public/assets/symbols*.{json,png|webp}`. Give two or three sentences: what was made, anything
+that needs a decision (a symbol that fails the greyscale test, an atlas near the budget), and
+one next step (animation pass, win title art, or running `casino-game-audit` on a build).
+
+## Pitfalls
+- No style guide, so the set drifts. Fix by writing `style.json` first.
+- Judging symbols at 256px on a big monitor; they fail at 140px on a phone. Always view the
+  shrink strip.
+- Glow or shadow outside the viewBox gets cut. Pad the canvas.
+- Duplicate gradient ids across files give the wrong colours.
+- `@2x` file with `meta.scale` "1" (or the reverse) renders at the wrong size in Pixi v8; the
+  script writes them consistently, so do not hand-edit the JSON.
+- Many near-identical high-pay symbols. Vary silhouette and dominant colour, not just detail.

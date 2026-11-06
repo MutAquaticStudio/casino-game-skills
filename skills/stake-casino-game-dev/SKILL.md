@@ -553,6 +553,8 @@ Workflow:
 - `casino-game-audit` – visual, render, FX, transitions, bet UI, spacing/typography, win
   celebrations, audio and localization audit with a scored report.
 - `casino-audio-design` – sound design, music, win stings, mixing and implementation.
+- `casino-symbol-art` – style guide, layered SVG symbols, readability checks at real reel size,
+  Pixi atlas export and Spine layer hand-off, plus win-title, reel-frame and background art.
 
 ## 6. Useful links
 Docs https://stakeengine.github.io/docs/ (Approval, API, Math SDK, Web SDK, Reference) ·
