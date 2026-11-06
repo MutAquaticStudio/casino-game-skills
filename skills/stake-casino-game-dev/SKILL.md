@@ -1,6 +1,6 @@
 ---
 name: "stake-casino-game-dev"
-description: "Ideate, build, balance, review and submit casino/slot games for Stake Engine: deep multi-mode gameplay, Stake-compliant win celebrations (Big Win and above), localization, Math SDK, RGS API, PixiJS/Three.js, approval checklist."
+description: "Ideate, build, balance, review and submit casino/slot games for Stake Engine: deep multi-mode gameplay, Stake-compliant win celebrations, localization, Math SDK, RGS API, PixiJS 8 (latest) and Three.js frontends, approval checklist."
 ---
 
 # Casino game development for Stake Engine
