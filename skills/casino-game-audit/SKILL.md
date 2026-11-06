@@ -79,6 +79,16 @@ bet mode switches (base ↔ boost ↔ bonus buy); entering/leaving replay.
 - Bet values formatted per currency (JPY 0 decimals, GC/SC without `$`); long values fit.
 - Modals consistent, readable, closable, and never hiding the result just shown.
 - Social mode labels without restricted words (Bet, Buy, Cash…).
+- Layout archetype identified (bottom dock / floating cluster / side rails) and applied
+  consistently; order settings → balance → win → bet → spin → modes; bet next to spin.
+- Measure against `stake-casino-game-dev` §13: dock ≈ 9–12% H, spin ≈ 1.3–1.6× dock height and
+  the most prominent element, secondary buttons ≈ 0.5–0.65× spin, value text ≈ 1.5× label text,
+  win cell reserved at 0 (no layout jump).
+- Text/icons over art have a backing or scrim; no thin outline icons straight on busy art.
+- Flag as blockers: ante/feature toggles costing > 2× without a confirmation step,
+  hold-to-spin / hold-space continuous spinning, autoplay that starts on one tap, missing bet
+  levels, missing sound toggle; flag operator widgets (lobby, tournaments) inside the game.
+- Popout 400×225 and mobile portrait/landscape variants exist and keep spin, bet and balance usable.
 
 ### F. Spacing, layout & typography
 - A spacing scale (4/8 px grid) used consistently; equal margins around the board; HUD on a

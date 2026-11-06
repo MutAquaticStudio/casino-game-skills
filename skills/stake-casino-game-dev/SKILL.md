@@ -231,7 +231,7 @@ session, `ERR_ATE` auth failed, `ERR_GLE` gambling limits, `ERR_LOC` location; (
 Money display: amount / 1e6 with currency decimals – USD 2, EUR 2, JPY 0, Gold Coins `XGC` →
 "10.00 GC", Stake Cash `XSC` → "10.00 SC" (no `$`). Full list: docs `reference/currencies`.
 
-**Required UI / behaviour**
+**Required UI / behaviour** (layout and sizing of the bet UI: §13)
 - Rules/info screen reachable anytime: full rules; UI guide for every button; RTP and max win
   per mode; cost + description of each mode; payout for every symbol combination; win
   combinations (line diagram, cluster sizes, scatter counts); all special-symbol values;
@@ -718,3 +718,74 @@ stage
   HTMLText alignment made consistent – re-check text layouts after upgrading.
 - **8.16:** tagged text (inline styles in one `Text`) and an experimental Canvas renderer
   fallback.
+
+## 13. Bet UI / HUD design
+
+Learned from a reference set of live slots from four different studios (Nov 2026). Use the
+patterns, not the look: build an original skin – copying another studio's UI risks rejection.
+
+### 13.1 Three proven layout archetypes
+| Archetype | Layout | Strengths | Watch out for |
+|---|---|---|---|
+| **A. Bottom dock** (segmented bar) | One dark translucent dock, bottom-centre: `[turbo/mode] [≡ · BALANCE · WIN] [BET ▲▼] [autoplay] (SPIN) [feature/buy]` | Most readable, scales best to popout, players know it | Generic – skin it with a light touch of the game's materials |
+| **B. Floating cluster** | Bottom-left: menu, sound, info + balance/bet printed on the art; centre: hint/win line; bottom-right: `−  (SPIN)  +` with an autoplay pill under the spin | Immersive, more art visible | Legibility over art – needs a scrim/gradient behind text |
+| **C. Side rails** | Vertical icon columns left/right, big spin at right-middle, bet/balance as a thin text strip on the bottom edge | Best thumb reach in landscape mobile, maximum board space | Tiny values and outline icons get lost on busy art; needs a separate portrait layout |
+
+Default for Stake games: **A** for desktop/popout (safest for approval and the 400×225 popout),
+**B** when the art is calm, **C** only as the mobile-landscape variant.
+
+### 13.2 Anatomy and measurements (16:9 landscape, H = viewport height)
+- **Order, left → right:** settings/navigation → balance → win → bet → spin → modes/feature.
+  Bet sits next to spin (adjust, then spin); balance is farthest away.
+- **Dock:** height ≈ 9–12% H, bottom margin ≈ 2–3% H, width ≤ ~70% W, centred; it must not
+  cover the board's bottom row. Panels black at 70–85% opacity, radius 6–10 px, gaps 4–8 px
+  between cells.
+- **Spin button:** diameter ≈ 1.3–1.6× dock height (≈ 14–17% H), overlapping the dock's top
+  edge; the single most prominent element (ring + circular-arrow icon is the convention);
+  shows a clear spinning/disabled state and can become a stop/skip button.
+- **Secondary buttons** (turbo, autoplay, menu, sound): ≈ 0.5–0.65× the spin diameter,
+  icon-only (explained in the UI guide), hit areas ≥ 44 CSS px even if the icon is smaller.
+- **Label/value pairs:** label uppercase ≈ 1.6–2% H, value ≈ 2.6–3.2% H (≈ 1.5× the label),
+  bold sans, **tabular digits**, currency formatted per currency (JPY 0 decimals, GC/SC without `$`).
+- **Bet cell:** its own panel, slightly brighter than the rest; ▲▼ stepper (or −/+ flanking the
+  spin); tapping the value opens a picker grid with **every** RGS bet level incl. min/max.
+- **Win cell:** reserve its space even at 0 (no layout jump); the roll-up happens here; Big Win
+  and above escalate to the celebration layer (§8).
+
+### 13.3 Mode and feature controls
+- **Ante/boost toggle** (panel beside the board): state price and benefit explicitly
+  ("Play 1.25× – double chance of free spins") with a clear ON/OFF switch. If the mode costs
+  **more than 2×**, switching needs a confirmation dialog – not a one-tap toggle (Stake rule).
+- **Mode / bonus-buy button:** a distinct accent-colour circle at the dock end showing the
+  current mode name; opens a sheet listing every mode with cost, promise, RTP and max win,
+  then a confirm step.
+- **Turbo:** lightning icon with an obvious on/off state (filled vs outline).
+- **Autoplay:** icon next to the spin opens a panel (number of spins, optional stop
+  conditions) with a confirm button – it never starts on the first tap. Do **not** implement
+  "hold space / hold spin for continuous spins": it places consecutive bets without
+  confirmation. Space = one spin.
+- **Feature hint banner** (e.g. "4 scatters award free spins") is fine; keep it short, localized
+  and social-safe.
+- Don't put operator widgets (lobby button, tournaments, promos) inside the game – the platform
+  wraps the game itself.
+
+### 13.4 Responsive variants
+- **Desktop / laptop:** full dock with labels.
+- **Popout L/S (800×450, 400×225):** compress the dock – values without labels, merge
+  balance/win into one cell, move secondary buttons into the menu, spin stays ≥ 44 px, board
+  keeps ≥ ~65% of the height.
+- **Mobile portrait:** board on top; controls in the bottom ~30%: big spin centred, bet −/+ on
+  either side, turbo/autoplay small beside them, balance/win row above, menu in a top corner;
+  the spin sits in the natural thumb zone.
+- **Mobile landscape:** side-rail variant (spin right-middle, settings left).
+
+### 13.5 Visual rules
+- Text and icons over art always get a backing (panel, disk or gradient scrim); thin outline
+  icons straight on busy art fail contrast. Values need ≥ 4.5:1 contrast.
+- Colour roles: one accent for the primary action (spin), one for feature/buy; states via
+  fill vs outline; disabled ≈ 40% opacity; animate the spin ring while spinning.
+- Typography: a sturdy UI sans for labels/values; the theme display font only for logo/titles.
+- Skin with restraint: wood/metal/fabric trims and themed icons are welcome, but keep the
+  conventional positions and shapes so players instantly find spin, bet and balance.
+- Localization: labels grow (de/fi/ru); test the longest value (e.g. "¥150,000,000"). Social mode:
+  "BET" → "PLAY AMOUNT"/"PLAY", "CREDIT" → "BALANCE"/"COINS", "BUY" → "GET"; no "AutoBET".
