@@ -67,25 +67,44 @@ becomes a Spine mesh whose weights run from the hip (top) through a `hem` bone (
 (feet 0.00 px), mid-leg 3.6 px, so nothing tears.
 
 ### Advanced rigging for hair and clothing (bone chains and physics)
-Hair and cloth need many small bones, not one rotating plate.
-- **Chains:** `hair1..hair4` hang from the head, `flapR1..flapR4` and `flapL1..flapL3` hang from the hip. Each
-  bone's length is the distance to the next pivot (physics uses it).
-- **Weights:** a soft part can use `"chain": [{"bone", "y"}, ...]` (weights interpolate along the chain by
-  height; used for the hair) and `"zones": [{"x": [x0, x1], "falloff", "y_end", "chain": [...]}]` that blend a
-  chain into a horizontal region of the skirt mesh (the side flaps) without dragging the legs below `y_end`.
-- **Motion:** each chain bone gets a small keyed sway that lags along the chain (`--amp 0.5`), plus a Spine 4.2
-  **physics constraint** (`"physics": "hair" | "cloth" | "tail"` on a bone; presets in `PHYSICS`) that adds
-  overshoot and settle in the runtime. Verified: the rig, with 11 physics constraints, loads and simulates in
-  spine-core 4.2.120 (3 warm-up loops, then recorded), the cheer hop excites it without instability.
-- **Measured (priestess, 997 px tall, idle):** hair tip travel 17 px, mid-hair 8 px, right flap tip 24 px,
-  left flap tip 12 px, ankle seam 0.0 px.
-- **Tuning lesson:** physics alone was too weak to see (2 to 5 px) because the idle body motion is small, and
-  forcing it with an oscillating wind went unstable (a 250 px hair explosion at `--sway 250`). So the chain
-  carries a keyed base sway and physics only adds lag; `--sway` (keyed wind on the constraints) and `--wind`
-  stay available but default to 0.
-- **Not verified:** that `@esotericsoftware/spine-pixi-v8` runs physics the same way in the game (it needs
-  `Physics.update` each frame and the same step; check the hair does not jitter at 60 and 120 Hz), and that
-  frame-rate changes keep amplitude stable.
+Hair and cloth need chains of small bones, not one rotating plate.
+- **Chains:** `hair1..hair4` hang from the head, `flapR1..flapR4` and `flapL1..flapL3` from the hip. Bone length is the distance
+  to the next pivot. **Chain bones are rotated to point along the chain** (toward the next bone): Spine's rotate-physics only
+  deflects a bone when it moves perpendicular to the bone's own axis, so a hair bone left pointing +x while the hair hangs down
+  barely reacts (found by the audit, see below). Local positions and mesh weights are computed in each bone's rotated frame.
+- **Weights:** a soft part uses `"chain": [{"bone", "y"}, ...]` (weights come from projecting each vertex onto the chain's own
+  polyline, so weight bands run perpendicular to the strand and do not shear) and `"zones": [{"x": [x0, x1], "falloff", "y_end",
+  "chain": [...]}]` that blend a chain into a region of the skirt mesh (the side flaps). **`falloff` is the transition width: strain
+  is roughly (flap displacement) / falloff, so keep it wide (60 to 110 px here); 25 px tore the skirt.**
+- **Motion:** chain bones are not keyed (a keyed sine looks mechanical). A Spine 4.2 **physics constraint** on each
+  (`"physics": "hair" | "cloth" | "tail"`, presets in `PHYSICS`) reacts to the body motion, and a **wind timeline** with two
+  harmonics and a different phase per chain (`--sway`, default 0.45) supplies the gentle breeze. Wind is in rotation-physics units and
+  accumulates down a chain (each bone adds its angle to its parent's), so a value that looks small is not: 7 shook the hair 186 px
+  and folded the mesh; 0.45 gives a 21 px hair tip.
+- **Every physics constraint needs a unique `order`.** The builder first wrote all of them as 0 and Spine's update cache then
+  activated only ONE of the 11 constraints, so hair and cloth were moving only by keyframes. The audit exposed it (zero reaction to an impulse).
+
+### Audit: `rig_audit.py` (run it before trusting a rig)
+```sh
+python3 skills/casino-symbol-art/scripts/rig_audit.py art/rig/mascot --anim idle --duration 3.2     # needs spine-core 4.2 installed
+python3 skills/casino-symbol-art/scripts/rig_audit.py art/rig/mascot --anim cheer --duration 1.4
+```
+Uses the official runtime (`spine_audit.mjs`) and prints pass, WARN or FAIL per item (thresholds in `THRESH`):
+- **Distortion**, per weighted mesh over the whole animation: triangle area and edge-length ratio against the rest pose (1.00 is untouched)
+  and folded triangles. ok: area 0.85 to 1.20 and edges 0.90 to 1.12; WARN beyond that; FAIL beyond 0.70 to 1.40 area, 0.80 to 1.25 edges, or any fold.
+- **Physics**, per constraint: swing after a 30 px impulse and how much is left after 2 s and 4 s (settles, does not explode);
+  idle travel at 30 Hz and 120 Hz (frame-rate independence, ratio 0.8 to 1.25); lag of each bone behind its physics parent
+  (0.02 to 0.40 s with correlation of 0.5 or more: follow-through, not lock-step).
+
+Result on the priestess after the fixes (idle / cheer): 0 FAIL, 3 WARN each. Hair mesh area 0.92 to 1.09 and edges 0.89 to 1.15
+(10 to 15 percent strain at worst, WARN); skirt ok in idle (0.93 to 1.09) and WARN in cheer (0.84 to 1.11). Physics: impulse swing grows toward
+the tip (12 to 36 px), settles in under 2 s, 30 Hz and 120 Hz travel agree to within 1 percent, lag behind the parent grows along the
+chain (hair 0.18, 0.32, 0.38 s). Remaining WARN: the last two cloth bones lag 0.50 s behind their parent, a little heavy. Close-up
+renders of hair and flaps show the lotus pattern and face unchanged, no visible stretch. Idle tip travel: hair 21 px, right flap 18 px, left flap 6 px.
+Also changed: the cheer hem swing went from 6 to 2.5 degrees because it tore the skirt (edge ratio 0.70).
+
+What the audit cannot judge: whether the motion looks pleasing. It proves the motion is stable, frame-rate independent, continuous with the
+art and lagged along the chain; amplitude and style are still a human call on the video.
 
 Limits of 2a: parts are rigid, so cloth and hair bend only as separate parts; the area hidden under a
 part is a copy of neighbouring pixels (the overlap), not painted art, so rotations beyond about 10 degrees

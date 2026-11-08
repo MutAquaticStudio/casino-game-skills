@@ -56,9 +56,9 @@ DEFAULT_IDLE = {
 # Spine 4.2 physics constraint presets (rotate-mode secondary motion). The constraint reacts to the movement of its
 # parent bones (inertia) and springs back (strength, damping); wind adds a steady breeze. Tune on the preview.
 PHYSICS = {
-    "hair":  dict(rotate=1, inertia=0.55, strength=40, damping=0.80, mass=1.2, wind=0.0, gravity=0.0, mix=1),
-    "cloth": dict(rotate=1, inertia=0.60, strength=55, damping=0.78, mass=1.6, wind=0.0, gravity=0.0, mix=1),
-    "tail":  dict(rotate=1, inertia=0.55, strength=35, damping=0.82, mass=1.4, wind=0.0, gravity=0.0, mix=1),
+    "hair":  dict(rotate=1, inertia=0.70, strength=30, damping=0.88, mass=1.1, wind=0.0, gravity=0.0, mix=1),
+    "cloth": dict(rotate=1, inertia=0.70, strength=38, damping=0.86, mass=1.4, wind=0.0, gravity=0.0, mix=1),
+    "tail":  dict(rotate=1, inertia=0.70, strength=28, damping=0.88, mass=1.3, wind=0.0, gravity=0.0, mix=1),
 }
 
 
@@ -80,8 +80,25 @@ def smoothstep(e0, e1, x):
     return t * t * (3 - 2 * t)
 
 
-def chain_weights(y, chain):
-    """Weights of a bone chain (list of {"bone","y"}) for a vertex at image height y: linear between neighbours."""
+def chain_weights(y, chain, x=None, pivot=None):
+    """Weights of a bone chain (list of {"bone","y"}) for a vertex. With x and pivot given, the vertex is projected onto the
+    chain's own polyline (bone pivots), so the weight bands run PERPENDICULAR to the strand or flap instead of horizontally;
+    that keeps neighbouring weights aligned with the bending direction and avoids shear. Without them: bands by height."""
+    if x is not None and pivot is not None and all(c["bone"] in pivot for c in chain):
+        P = [np.array(pivot[c["bone"]], float) for c in chain]; v = np.array([x, y], float)
+        best = None
+        for i in range(len(P) - 1):
+            d = P[i + 1] - P[i]; L2 = float(d @ d)
+            t = float((v - P[i]) @ d) / L2 if L2 > 0 else 0.0
+            tc = min(1.0, max(0.0, t)); dist = float(np.linalg.norm(v - (P[i] + d * tc)))
+            # prefer the segment whose projection is inside [0, 1]; ties by distance
+            score = dist + (0 if 0 <= t <= 1 else 1e3)
+            if best is None or score < best[0]: best = (score, i, t)
+        _, i, t = best
+        if i == 0 and t < 0: return {chain[0]["bone"]: 1.0}
+        if i == len(P) - 2 and t > 1: return {chain[-1]["bone"]: 1.0}
+        t = smoothstep(0.0, 1.0, min(1.0, max(0.0, t)))
+        return {chain[i]["bone"]: 1 - t, chain[i + 1]["bone"]: t}
     ys = [float(c["y"]) for c in chain]
     if y <= ys[0]: return {chain[0]["bone"]: 1.0}
     if y >= ys[-1]: return {chain[-1]["bone"]: 1.0}
@@ -91,7 +108,7 @@ def chain_weights(y, chain):
             return {chain[i]["bone"]: 1 - t, chain[i + 1]["bone"]: t}
 
 
-def soft_mesh(box, cfg, sk, pivot, bone_index):
+def soft_mesh(box, cfg, sk, pivot, bone_index, wrot):
     """Weighted mesh for a part that must stay continuous while several bones move differently.
     Base weighting by image height, either
       top / mid / bottom bones with y_top and y_bottom (skirt and legs between a swaying hip and planted feet), or
@@ -117,9 +134,9 @@ def soft_mesh(box, cfg, sk, pivot, bone_index):
         for i in range(cols):
             a, b, c, d = grid[(i, j)], grid[(i + 1, j)], grid[(i + 1, j + 1)], grid[(i, j + 1)]
             tris += [a, b, c, a, c, d]
-    def base(y):
+    def base(y, x_=None):
         if "chain" in cfg:
-            return chain_weights(y, cfg["chain"])
+            return chain_weights(y, cfg["chain"], x_, pivot)
         top, mid, bot = cfg["top"], cfg.get("mid"), cfg["bottom"]
         yt, yb = float(cfg["y_top"]), float(cfg["y_bottom"])
         t = (y - yt) / (yb - yt)
@@ -130,17 +147,21 @@ def soft_mesh(box, cfg, sk, pivot, bone_index):
         return ws
     out, uvs = [], []
     for (x, y) in verts:
-        ws = dict(base(y))
+        ws = dict(base(y, x))
         for z in cfg.get("zones", []):
             zx0, zx1, fo = z["x"][0], z["x"][1], float(z.get("falloff", 30))
             zw = min(smoothstep(zx0 - fo, zx0, x), 1 - smoothstep(zx1, zx1 + fo, x))
             ch = z["chain"]
-            ramp = smoothstep(float(ch[0]["y"]), float(ch[1]["y"]), y) if len(ch) > 1 else 1.0
+            if len(ch) > 1 and all(c["bone"] in pivot for c in ch[:2]):
+                p0, p1 = np.array(pivot[ch[0]["bone"]], float), np.array(pivot[ch[1]["bone"]], float); dd = p1 - p0
+                ramp = smoothstep(0.0, 1.0, float((np.array([x, y]) - p0) @ dd) / max(float(dd @ dd), 1e-6))
+            else:
+                ramp = smoothstep(float(ch[0]["y"]), float(ch[1]["y"]), y) if len(ch) > 1 else 1.0
             amt = zw * ramp
             if "y_end" in z:                    # fade the blend out below the end of the cloth (do not drag legs or feet)
                 amt *= 1 - smoothstep(float(z["y_end"]) - 30, float(z["y_end"]), y)
             if amt > 0:
-                cw = chain_weights(y, ch)
+                cw = chain_weights(y, ch, x, pivot)
                 ws = {k: v * (1 - amt) for k, v in ws.items()}
                 for k, v in cw.items(): ws[k] = ws.get(k, 0.0) + v * amt
         ws = {k: v for k, v in ws.items() if v > 0.001}
@@ -148,8 +169,9 @@ def soft_mesh(box, cfg, sk, pivot, bone_index):
         wx, wy = sk((x, y))
         out.append(len(ws))
         for b, wt in ws.items():
-            bx, by = sk(pivot[b])
-            out += [bone_index[b], round(wx - bx, 3), round(wy - by, 3), round(wt, 5)]
+            bx, by = sk(pivot[b]); c_, s_ = math.cos(math.radians(-wrot[b])), math.sin(math.radians(-wrot[b]))
+            dx_, dy_ = wx - bx, wy - by                      # vertex in the bone's own (rotated) frame
+            out += [bone_index[b], round(c_ * dx_ - s_ * dy_, 3), round(s_ * dx_ + c_ * dy_, 3), round(wt, 5)]
         uvs += [round((x - x0) / w, 6), round((y - y0) / h, 6)]
     return {"type": "mesh", "uvs": uvs, "triangles": tris, "vertices": out, "hull": hull, "width": w, "height": h}
 
@@ -177,7 +199,7 @@ def main():
     ap.add_argument("spec"); ap.add_argument("--out", default="rig"); ap.add_argument("--name", default="mascot")
     ap.add_argument("--amp", type=float, default=0.5); ap.add_argument("--debug", action="store_true")
     ap.add_argument("--wind", type=float, default=0.0, help="extra steady wind added to every physics constraint (tune on the preview)")
-    ap.add_argument("--sway", type=float, default=0.0, help="amplitude of the oscillating breeze keyed on every physics constraint in `idle` (0 = off)")
+    ap.add_argument("--sway", type=float, default=0.45, help="amplitude of the oscillating breeze keyed on every physics constraint in `idle` (0 = off)")
     ap.add_argument("--no-adopt", action="store_true", help="keep stray catch-all pieces where they are")
     a = ap.parse_args()
     spec = json.load(open(a.spec)); base = os.path.dirname(os.path.abspath(a.spec))
@@ -227,12 +249,34 @@ def main():
     pivot = {"root": (W / 2.0, float(H))}
     for b in bones: pivot[b["name"]] = tuple(b["pivot"])
     def sk(p): return (p[0] - W / 2.0, H - p[1])           # image px -> skeleton space (y up)
+    # World rotation of every bone (degrees, y up). Chain bones (physics or "orient": true) point along their chain, toward
+    # the first child, because Spine's physics deflects a bone only when it moves PERPENDICULAR to the bone's own axis: a
+    # hair bone left pointing +x while the hair hangs down would barely react. The last bone of a chain keeps its
+    # parent's direction (or an explicit "angle"). Other bones stay at 0 so the rest of the rig is unchanged.
+    by_name0 = {b["name"]: b for b in bones}
+    wrot = {"root": 0.0}
+    for b in bones:
+        kids = [c for c in bones if c["parent"] == b["name"]]
+        if b.get("physics") or b.get("orient"):
+            if "angle" in b: wrot[b["name"]] = float(b["angle"])
+            elif kids:
+                dx = pivot[kids[0]["name"]][0] - pivot[b["name"]][0]; dy = -(pivot[kids[0]["name"]][1] - pivot[b["name"]][1])
+                wrot[b["name"]] = math.degrees(math.atan2(dy, dx))
+            else:
+                wrot[b["name"]] = wrot.get(b["parent"], 0.0)
+        else:
+            wrot[b["name"]] = 0.0
+    def rot(vx, vy, deg):                                # rotate a vector by deg (counter-clockwise, y up)
+        c, s = math.cos(math.radians(deg)), math.sin(math.radians(deg)); return (c * vx - s * vy, s * vx + c * vy)
     spine_bones = [{"name": "root"}]
     for b in bones:
         px, py = sk(pivot[b["parent"]]); bx, by = sk(pivot[b["name"]])
+        lx, ly = rot(bx - px, by - py, -wrot[b["parent"]])          # position in the parent's rotated frame
         kids = [c for c in bones if c["parent"] == b["name"]]
         ln = math.hypot(pivot[kids[0]["name"]][0] - pivot[b["name"]][0], pivot[kids[0]["name"]][1] - pivot[b["name"]][1]) if kids else float(b.get("length", 60))
-        spine_bones.append({"name": b["name"], "parent": b["parent"], "x": round(bx - px, 3), "y": round(by - py, 3), "length": round(ln, 2)})
+        e = {"name": b["name"], "parent": b["parent"], "x": round(lx, 3), "y": round(ly, 3), "length": round(ln, 2)}
+        if wrot[b["name"]] - wrot[b["parent"]]: e["rotation"] = round(wrot[b["name"]] - wrot[b["parent"]], 4)
+        spine_bones.append(e)
 
     tiles, slots, atts = [], [], {}
     kern = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * overlap + 1, 2 * overlap + 1))
@@ -262,9 +306,12 @@ def main():
         slots.append({"name": t["name"], "bone": t["bone"], "attachment": t["name"]})
         if t["soft"]:
             bone_index = {n: i for i, n in enumerate(names)}
-            atts[t["name"]] = {t["name"]: soft_mesh(t["box"], t["soft"], sk, pivot, bone_index)}
+            atts[t["name"]] = {t["name"]: soft_mesh(t["box"], t["soft"], sk, pivot, bone_index, wrot)}
         else:
-            atts[t["name"]] = {t["name"]: {"x": round(sx - bx, 3), "y": round(sy - by, 3), "width": x1 - x0, "height": y1 - y0}}
+            rx_, ry_ = rot(sx - bx, sy - by, -wrot[t["bone"]])
+            att = {"x": round(rx_, 3), "y": round(ry_, 3), "width": x1 - x0, "height": y1 - y0}
+            if wrot[t["bone"]]: att["rotation"] = round(-wrot[t["bone"]], 4)   # keep the image upright on a rotated bone
+            atts[t["name"]] = {t["name"]: att}
     page.save(os.path.join(a.out, a.name + ".png"))
 
     # ---------------- animations
@@ -278,7 +325,9 @@ def main():
             cfg = dict(PHYSICS[b["physics"]] if isinstance(b["physics"], str) else {**PHYSICS["hair"], **b["physics"]})
             if isinstance(b["physics"], str) and "physics_override" in b: cfg.update(b["physics_override"])
             cfg["wind"] = cfg.get("wind", 0.0) + a.wind * (1.0 if cfg.get("wind", 0) >= 0 else -1.0)
-            physics.append({"name": b["name"] + "_phys", "bone": b["name"], **cfg})
+            # `order` must be unique across all constraints of the skeleton: Spine's update cache looks constraints up by order,
+            # so with every order = 0 only ONE physics constraint is ever active (found by rig_audit.py).
+            physics.append({"name": b["name"] + "_phys", "bone": b["name"], "order": len(physics), **cfg})
     pbones = {p["bone"] for p in physics}
     by_name = {b["name"]: b for b in bones}
     def depth_of(n):                                 # how many physics bones above this one in its chain
@@ -289,8 +338,8 @@ def main():
     for b in bones:
         q = idle_params(b["name"], ov_idle)
         if not q: continue
-        if b["name"] in pbones:                      # chain bones get a gentle keyed sway, lagging along the chain;
-            q = dict(q); q["phase"] = q.get("phase", 0) - 0.55 * depth_of(b["name"])   # physics adds overshoot on top
+        if b["name"] in pbones and not b.get("keyed"):   # physics-driven bones are not keyed (a keyed sine looks mechanical);
+            continue                                     # the breeze (wind timeline) and the body motion drive them
         tl = {}
         ks = smooth_keys(P, N)
         if q.get("rot"): tl["rotate"] = [{"time": t, "value": round(q["rot"] * a.amp * math.sin(ph + q.get("phase", 0)), 3)} for t, ph in ks]
@@ -301,19 +350,17 @@ def main():
             tl["scale"] = [{"time": t, "x": round(1 + q.get("sx", 0) * a.amp * math.sin(ph + q.get("phase", 0) - math.pi / 2), 5),
                             "y": round(1 + q.get("sy", 0) * a.amp * math.sin(ph + q.get("phase", 0) - math.pi / 2), 5)} for t, ph in ks]
         if tl: idle["bones"][b["name"]] = tl
-    # breeze: each physics constraint gets a wind timeline, phase-shifted along its chain so the tip lags the root
+    # breeze: every physics constraint gets a wind timeline made of two harmonics (so it never looks like one sine), with a
+    # different phase per chain, and a small delay along the chain. Amplitude is `--sway` (rotation-physics wind units).
     if physics and a.sway > 0:
         idle["physics"] = {}
-        chain_pos = {}
         for p in physics:
-            nm = p["bone"]; depth = 0; cur = nm
-            by_name = {b["name"]: b for b in bones}
-            while by_name[cur]["parent"] in by_name and by_name[by_name[cur]["parent"]].get("physics"):
-                cur = by_name[cur]["parent"]; depth += 1
+            nm = p["bone"]; depth = depth_of(nm)
             kind = by_name[nm]["physics"] if isinstance(by_name[nm]["physics"], str) else "hair"
             amp = a.sway * (1.0 if kind == "hair" else 0.8)
-            phase = -0.7 * depth + (0.0 if nm.startswith("hair") else (1.3 if "R" in nm[-2:] else 2.2))
-            idle["physics"][p["name"]] = {"wind": [{"time": t, "value": round(p["wind"] + amp * math.sin(ph + phase), 3)} for t, ph in smooth_keys(P, N)]}
+            chain_phase = 0.0 if nm.startswith("hair") else (1.3 if nm.endswith("R1") or "R" in nm[-2:] else 2.2)
+            ph = chain_phase - 0.35 * depth
+            idle["physics"][p["name"]] = {"wind": [{"time": t, "value": round(p["wind"] + amp * (math.sin(x + ph) + 0.4 * math.sin(2 * x + 1.7 * ph + 0.6)), 3)} for t, x in smooth_keys(P, N)]}
     T = 1.4; ks = [round(T * k / 14, 4) for k in range(15)]
     env = lambda t: math.sin(math.pi * min(1.0, t / T)) ** 2
     cheer = {"bones": {}}
@@ -327,7 +374,7 @@ def main():
         elif n in pbones:
             continue
         elif n.startswith(("head", "hem", "hair", "arm", "forearm", "spear", "weapon", "dragon", "pet", "skirt", "cape", "tail")):
-            amp = {"head": 5, "hem": -6, "hair": -9, "arm": 7, "forearm": 9, "spear": 3, "weapon": 3, "dragon": 8, "pet": 8, "skirt": -6, "cape": -9, "tail": -9}
+            amp = {"head": 5, "hem": -2.5, "hair": -9, "arm": 7, "forearm": 9, "spear": 3, "weapon": 3, "dragon": 8, "pet": 8, "skirt": -6, "cape": -9, "tail": -9}
             k = next(v for kk, v in amp.items() if n.startswith(kk))
             tl["rotate"] = [{"time": t, "value": round(k * env(t) * math.sin(5 * t + 0.4 * (len(n) % 5)), 3)} for t in ks]
         if tl: cheer["bones"][n] = tl
