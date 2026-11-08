@@ -6,6 +6,11 @@ Status: asset list and rules are specified; **not yet produced end to end**, and
 a live Valkyrie or Hacksaw celebration (their celebrations were not captured, see
 `style-valkyrie-hacksaw.md` §5). Treat the visual direction below as design guidance.
 
+A second capture attempt (2026-11-08) also failed to reach a celebration: 22 base-game spins on Angel of Asgard produced only small wins,
+and the demo's menus (Info, Music, Sound) offered no bonus buy to force a big win. Do not describe Valkyrie's tier screens until a clip exists.
+One related observation that is evidenced: inside a game Valkyrie escalates Wild multiplier tiers by hue and finish
+(`style-valkyrie-hacksaw.md` §9), which supports escalating win tiers the same way.
+
 ## 1. Asset list per screen (from §8.3)
 | Screen | Art assets | Made by |
 |---|---|---|

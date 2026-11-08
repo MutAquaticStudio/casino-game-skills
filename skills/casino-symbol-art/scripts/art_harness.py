@@ -154,7 +154,18 @@ def build(theme, preset):
             "Dynamic confident pose, slight three-quarter view, whole figure visible from head to feet with space around it. "
             "The character will stand outside the reel window, left of the grid.")),
     }
-    return prefix, spec, P, container
+    # Thumbnail layers for the Stake Tile Editor (background, foreground, gradient, title). The tile must be BRIGHT and have
+    # no dark edges, so the dark-and-cool rule of the in-game grammar is dropped from the prefix. The gradient and the title are made
+    # in the Tile Editor (the title is live text), so only background and foreground are generated. Square size is a placeholder:
+    # read the real size and guidelines in the dashboard.
+    tile_prefix = re.sub(r"Colour base:[^.]*\.\s*", "", re.sub(r"About 70 percent[^.]*\.\s*", "", prefix)) + " Bright, high-key, saturated, luminous colours; no dark corners, no vignette."
+    spec["tile_background"] = dict(w=1024, h=1024, group="tile", anchor=False, call=8, optional=True, thumb=True, part=(
+        "Game tile background, no characters, no text. A simple, uncluttered scene or abstract pattern from the theme with a luminous light-to-warm "
+        "colour gradient, centre lighter than the edges, no dark areas anywhere, soft shapes so a character and a title can sit on top. Square."))
+    spec["tile_foreground"] = dict(w=1024, h=1024, group="tile", anchor=False, call=9, optional=True, thumb=True, part=(
+        f"Game tile foreground, a single key figure centred on a {KEY}, no text. The hero of the game, large, filling about 80 percent of the height, "
+        f"strongest contrast and most detail in the centre of the image, bold readable silhouette: {t['hero']}. Leave the top 20 percent empty for the title."))
+    return prefix, spec, P, container, tile_prefix
 
 
 def main():
@@ -168,7 +179,7 @@ def main():
     if not a.theme:
         ap.error("theme.json required (or --example)")
     theme = json.load(open(a.theme))
-    prefix, spec, P, container = build(theme, a.preset)
+    prefix, spec, P, container, tile_prefix = build(theme, a.preset)
     os.makedirs(os.path.join(a.out, "prompts"), exist_ok=True)
     pal = theme.get("palette", P["palette_default"]); warm = theme.get("warm_accent", P["warm_default"])
     style = {
@@ -176,18 +187,19 @@ def main():
         "premium_container": container, "readability_rule": CONTAINERS[container]["read"],
         "style_lock": {"model": "set once and never change within a set", "prefix": prefix, "key": KEY,
                        "aspect": {"backdrop": "16:9", "sheet": "7:3", "single": "1:1"}},
-        "style_check": {"groups": {"symbol": ["symbols_*", "sym_*", "rank_*"], "background": ["backdrop*", "board*"],
+        "style_check": {"groups": {"symbol": ["symbols_*", "sym_*", "rank_*"], "background": ["backdrop*", "board*"], "tile": ["tile_*"],
                                    "frame": ["frame*"], "character": ["hero*"], "special": ["wild*", "scatter*", "bonus*"]},
                         "tolerances": P["tol"], "exempt": {}},
     }
     json.dump(style, open(os.path.join(a.out, "style.json"), "w"), indent=2, ensure_ascii=False)
     plan = []
     for name, s in sorted(spec.items(), key=lambda kv: kv[1]["call"]):
-        text = prefix + " " + s["part"]
+        text = (tile_prefix if s.get("thumb") else prefix) + " " + s["part"]
         open(os.path.join(a.out, "prompts", name + ".txt"), "w").write(text + "\n")
         plan.append({"call": s["call"], "asset": name, "width": s["w"], "height": s["h"], "group": s["group"],
                      "anchor": s["anchor"], "prompt_file": f"prompts/{name}.txt", "save_as": f"layers/{name}.png",
-                     "cut_out_magenta": name not in ("backdrop", "board")})
+                     "cut_out_magenta": name not in ("backdrop", "board", "tile_background"),
+                     **({"optional": True, "note": "Stake tile: check with scripts/tile_check.py; compose the gradient and the live title in the Tile Editor"} if s.get("optional") else {})})
     json.dump({"preset": a.preset, "order_note": "generate anchors first (anchor=true), have the user approve them, then the rest; "
                "run style_check.py after each call; max 3 regenerations per asset", "plan": plan},
               open(os.path.join(a.out, "plan.json"), "w"), indent=2)

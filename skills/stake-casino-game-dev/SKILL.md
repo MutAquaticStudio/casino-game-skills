@@ -50,7 +50,7 @@ Consequences:
 |---|---|---|---|---|
 | 1 Concept | this skill, §7 | idea or brief | concept doc: depth stack, mode ladder, event list, theme, grid, target RTP/wincap | §2 screen passed; mode ladder final (no modes can be added after approval) |
 | 2 Math | this skill, Phase 2 | concept doc | game_config.py, books, lookup tables, `winLevel` per outcome | `validate_math.py` clean |
-| 3 Art | `casino-symbol-art` | concept theme + mode list + real symbol size | `art/style.json` (with `style_lock`), symbol atlas, frame, board, backdrop, win/transition art | `style_check.py` no FAIL; shrink and greyscale tests; originality |
+| 3 Art | `casino-symbol-art` | concept theme + mode list + real symbol size | `art/style.json` (with `style_lock`), symbol atlas, frame, board, backdrop, win/transition art | `style_check.py` no FAIL; shrink and greyscale tests; `silhouette_check.py` for frameless symbols; `tile_check.py` on the tile; originality |
 | 4 Frontend | this skill, Phase 3, §12–13 | books, atlas, event list | static build wired to RGS, HUD, win celebration, locales | check_static_build.py clean; every book event type has a handler |
 | 5 Audio | `casino-audio-design` | event list, tier table | audio files + AudioManager | event → sound table complete |
 | 6 Integration | this skill, Phase 4 | build | test results across currencies, modes, sizes | 10 wins per mode match RGS payout |

@@ -63,6 +63,9 @@ container is a theme choice, `premium_container`: `roundel` (shared round medall
 `scripts/silhouette_check.py` and fix any pair above IoU 0.80 before compositing. The harness
 refuses brand or studio names in the theme.
 
+**Symbol animation in code:** `scripts/symbol_fx.json` + `symbol_fx.mjs` hold idle, land, appear, win, dim and tease recipes as data (no
+Spine needed); `scripts/symbol_fx_preview.py` checks them and renders a demo video. Usage and status: `references/symbol-fx.md`.
+
 **Style lock (required for the model-generated route, useful for all):** add a `style_lock` block
 to `style.json` (model, verbatim prompt prefix, key colour, aspect per asset type), paste the
 prefix first in every generation prompt, generate anchors first, and run
@@ -156,7 +159,7 @@ Same loop (style guide → SVG or raster → preview → export), different canv
 are in `references/symbol-design.md` §6:
 reel frame and board (9-slice friendly), background (≥ 2 parallax layers, kept calm behind the
 reels), win-tier title art (Big / Mega / Epic / Legendary / Max Win, from `stake-casino-game-dev`
-§8; asset list and style rules in `references/win-celebration-art.md`), HUD icons (follow the simplicity-first rule in §13.0 there), loading logo, thumbnail.
+§8; asset list and style rules in `references/win-celebration-art.md`), HUD icons (follow the simplicity-first rule in §13.0 there), loading logo, thumbnail (tile: `references/tile-thumbnail.md`, check with `scripts/tile_check.py`).
 
 ## 7. Hand-off
 Deliver the folder, not loose files: `art/style.json` (with `style_lock` for generated sets),

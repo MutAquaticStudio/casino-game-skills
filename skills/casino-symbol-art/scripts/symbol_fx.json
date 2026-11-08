@@ -1,0 +1,28 @@
+{
+  "_doc": "Symbol animation recipes as data. Times in seconds, scale and alpha unitless, rotation in degrees, y in px at 140 px symbol size (scale by size/140). Each key: [t, value, ease]; ease applies to the segment that ENDS at that key. Looping recipes must start and end on the same value.",
+  "idle":   {"loop": true,  "duration": 2.8, "tracks": {
+      "scaleY": [[0, 1, "linear"], [1.4, 1.015, "sine"], [2.8, 1, "sine"]],
+      "scaleX": [[0, 1, "linear"], [1.4, 0.992, "sine"], [2.8, 1, "sine"]],
+      "y":      [[0, 0, "linear"], [1.4, -1.5, "sine"], [2.8, 0, "sine"]]}},
+  "land":   {"loop": false, "duration": 0.30, "tracks": {
+      "scaleX": [[0, 1, "linear"], [0.07, 1.10, "outQuad"], [0.16, 0.97, "sine"], [0.24, 1.015, "sine"], [0.30, 1, "sine"]],
+      "scaleY": [[0, 1, "linear"], [0.07, 0.88, "outQuad"], [0.16, 1.045, "sine"], [0.24, 0.99, "sine"], [0.30, 1, "sine"]]}},
+  "appear": {"loop": false, "duration": 0.22, "tracks": {
+      "scaleX": [[0, 0.6, "linear"], [0.14, 1.08, "outQuad"], [0.22, 1, "sine"]],
+      "scaleY": [[0, 0.6, "linear"], [0.14, 1.08, "outQuad"], [0.22, 1, "sine"]],
+      "alpha":  [[0, 0, "linear"], [0.10, 1, "outQuad"], [0.22, 1, "linear"]]}},
+  "win":    {"loop": true,  "duration": 0.72, "tracks": {
+      "scaleX":   [[0, 1, "linear"], [0.18, 1.14, "outBack"], [0.36, 1.05, "sine"], [0.54, 1.12, "sine"], [0.72, 1, "sine"]],
+      "scaleY":   [[0, 1, "linear"], [0.18, 1.14, "outBack"], [0.36, 1.05, "sine"], [0.54, 1.12, "sine"], [0.72, 1, "sine"]],
+      "rotation": [[0, 0, "linear"], [0.18, -2, "sine"], [0.36, 2, "sine"], [0.54, -1, "sine"], [0.72, 0, "sine"]],
+      "glow":     [[0, 0, "linear"], [0.18, 0.9, "outQuad"], [0.36, 0.4, "sine"], [0.54, 0.8, "sine"], [0.72, 0, "sine"]]}},
+  "dim":    {"loop": false, "duration": 0.18, "tracks": {
+      "alpha":  [[0, 1, "linear"], [0.18, 0.35, "outQuad"]],
+      "scaleX": [[0, 1, "linear"], [0.18, 0.96, "outQuad"]],
+      "scaleY": [[0, 1, "linear"], [0.18, 0.96, "outQuad"]]}},
+  "tease":  {"loop": true,  "duration": 0.50, "tracks": {
+      "scaleX":   [[0, 1, "linear"], [0.25, 1.10, "sine"], [0.50, 1, "sine"]],
+      "scaleY":   [[0, 1, "linear"], [0.25, 1.10, "sine"], [0.50, 1, "sine"]],
+      "rotation": [[0, 0, "linear"], [0.125, -3, "sine"], [0.375, 3, "sine"], [0.50, 0, "sine"]],
+      "glow":     [[0, 0.2, "linear"], [0.25, 1, "sine"], [0.50, 0.2, "sine"]]}}
+}

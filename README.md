@@ -258,6 +258,8 @@ python3 skills/casino-symbol-art/scripts/svg_to_atlas.py build   art/svg --out p
 - `build`: ra `symbols@1x/@2x.json + .png (hoặc .webp)` theo định dạng Pixi đọc thẳng, `meta.scale` khớp ảnh. Đã kiểm tra nạp được bằng PixiJS 8.22. `build` và `preview` nhận cả file PNG trong suốt đặt chung thư mục (SVG trùng tên thì SVG thắng).
 - `compose_layered_screen.py` (cần `pillow`, `numpy`, `scipy`): ghép các lớp do mô hình sinh thành một màn slot: tách nền magenta bằng bộ lọc nghiêm ngặt, đặt nền guồng có hoa văn và vạch chia cột, xếp symbol, nhân vật, khung, thanh điều khiển vẽ bằng code. Là bản mẫu để sửa theo game của bạn, đọc `references/style-valkyrie-hacksaw.md` §6 trước.
 - `art_harness.py`: nhận một file theme (nơi chốn, nhân vật, 8 vật thể premium, bảng màu) và sinh `art/style.json` cùng một prompt khoá cho từng lớp, đã mang sẵn cấu trúc studio lớn (preset `valkyrie` hoặc `hacksaw`). Chọn kiểu symbol premium bằng `premium_container`: `roundel` (huy hiệu tròn), `tile` (ô vuông bo góc) hoặc `freeform` (mỗi symbol là một vật thể tự do, không khung). Từ chối theme có tên hãng hay thương hiệu. Không gọi mô hình, không tốn credit.
+- `tile_check.py` và `references/tile-thumbnail.md`: kiểm tra tile (thumbnail) theo các mục đo được trong checklist Stake: độ sáng, viền và góc tối, trọng tâm có chi tiết, tiêu đề nằm trong lề an toàn. Harness thêm hai lớp tile tuỳ chọn (nền sáng và nhân vật tách nền). Kích thước và đường dẫn guideline thật chỉ có trong Tile Editor của dashboard, chưa được ghi ở đây.
+- `symbol_fx.json`, `symbol_fx.mjs`, `symbol_fx_preview.py` và `references/symbol-fx.md`: sáu công thức animation symbol bằng code (idle, land, appear, win, dim, tease) dạng dữ liệu, bộ tính dùng được trong ticker PixiJS, script kiểm tra (vòng lặp khớp, về đúng vị trí nghỉ, bảo toàn thể tích, không che ô bên cạnh) và dựng video xem trước. Giá trị tự soạn, chưa đo từ studio nào, chưa thử trong PixiJS.
 - `silhouette_check.py`: tô đen từng symbol ở kích thước thật và so độ trùng khít hình dáng (IoU) từng cặp. Dùng cho kiểu `freeform`: không cặp nào được vượt 0.80. Với huy hiệu tròn hoặc ô vuông thì điểm cao là bình thường vì cùng một đường viền.
 - `style_check.py` (cần `pillow`, `numpy`, `scipy`): đo độ lệch phong cách của từng asset so với bộ gốc (khoảng cách tới bảng màu, độ sáng, độ bão hoà, tỷ lệ màu ấm, độ sáng viền, hướng sáng), so trong từng nhóm (symbol với symbol, nền với nền). WARN là cần xem lại, FAIL là sinh lại. Đã kiểm tra trên bản lệch cố ý: đổi tông màu bị FAIL, lật hướng sáng và tăng bão hoà bị WARN. Không thấy được hình dáng hay nét vẽ, nên vẫn phải xem contact sheet bằng mắt. Cách dùng và quy trình giữ nhất quán: `references/style-valkyrie-hacksaw.md` §7.
 - `build_symbol_set.py`: cắt các bảng symbol do mô hình sinh (chữ bài, premium, đặc biệt), vẽ huy hiệu "x5" của Wild và nhãn "SCATTER" bằng code, xuất từng symbol PNG, ảnh tổng hợp và ảnh kiểm tra đọc được ở 96 px (màu và thang xám).
@@ -334,7 +336,8 @@ skills/
     ├── SKILL.md
     ├── scripts/                 svg_to_atlas.py (lint, preview, layers, build), raster_cutout.py,
     │                            compose_layered_screen.py, build_symbol_set.py, style_check.py,
-    │                            art_harness.py, silhouette_check.py
+    │                            art_harness.py, silhouette_check.py, tile_check.py,
+    │                            symbol_fx.json, symbol_fx.mjs, symbol_fx_preview.py
     └── references/
         ├── symbol-design.md     style.json, palette, trạng thái symbol, asset khác, brief hoạ sĩ
         ├── export-and-pixi.md   atlas, tải trong Pixi v8, SymbolView, Spine
@@ -342,6 +345,8 @@ skills/
         ├── raster-art.md        hướng raster: chọn phong cách, 2 cách làm symbol, ràng buộc
         ├── style-valkyrie-hacksaw.md  nghiên cứu style Valkyrie/Hacksaw, quy trình lớp do mô hình sinh, giao thức giữ nhất quán
         ├── win-celebration-art.md     asset art cho win celebration, quy tắc leo thang theo cấp, bàn giao
+        ├── tile-thumbnail.md          tile (thumbnail) cho Tile Editor: các lớp, kiểm tra, giới hạn
+        ├── symbol-fx.md               animation symbol bằng code: công thức, kiểm tra, trạng thái
         └── vendor/
             ├── svg-design/      hướng dẫn SVG (opendesign, MIT)
             └── claude-drawing/  thư viện vẽ bằng code: lib/ (83 module), examples/ (86 script), docs/ (MIT)
