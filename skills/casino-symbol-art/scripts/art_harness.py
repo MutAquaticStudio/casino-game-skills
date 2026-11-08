@@ -187,7 +187,8 @@ def main():
         open(os.path.join(a.out, "prompts", name + ".txt"), "w").write(text + "\n")
         plan.append({"call": s["call"], "asset": name, "width": s["w"], "height": s["h"], "group": s["group"],
                      "anchor": s["anchor"], "prompt_file": f"prompts/{name}.txt", "save_as": f"layers/{name}.png",
-                     "cut_out_magenta": name not in ("backdrop", "board")})
+                     "cut_out_magenta": name not in ("backdrop", "board"),
+                     **({"next": "optional idle animation: python3 scripts/spine_idle_rig.py art/layers/hero.png --out art/rig --name mascot --key '#FF00FF' (see references/mascot-animation.md)"} if name == "hero" else {})})
     json.dump({"preset": a.preset, "order_note": "generate anchors first (anchor=true), have the user approve them, then the rest; "
                "run style_check.py after each call; max 3 regenerations per asset", "plan": plan},
               open(os.path.join(a.out, "plan.json"), "w"), indent=2)
