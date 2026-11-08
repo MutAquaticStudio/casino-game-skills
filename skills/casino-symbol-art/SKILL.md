@@ -63,10 +63,11 @@ container is a theme choice, `premium_container`: `roundel` (shared round medall
 `scripts/silhouette_check.py` and fix any pair above IoU 0.80 before compositing. The harness
 refuses brand or studio names in the theme.
 
-**Mascot animation:** `scripts/spine_idle_rig.py` builds a Spine 4.2 idle and cheer rig from the one
-cut-out hero image (breathing, head, hem sway, feet planted), verified with the official runtime by
-`scripts/spine_preview.py`. It cannot do blinking or limbs; those need a layered-parts rig made by an
-artist. Capabilities, limits and Pixi wiring: `references/mascot-animation.md`.
+**Mascot animation:** `scripts/spine_parts_rig.py` builds a Spine 4.2 rig with bones at the real joints
+(head, shoulders, elbows, held item, hair, pet, hem, feet) from one cut-out hero image plus a small part
+spec, and proves each joint with `spine_preview.py --joint-sheet`. `scripts/spine_idle_rig.py` is the quick
+single-mesh version; it stretches the art and has no real joints. Neither does blinking or fingers; those need
+parts painted or generated separately. Capabilities, limits and Pixi wiring: `references/mascot-animation.md`.
 
 **Style lock (required for the model-generated route, useful for all):** add a `style_lock` block
 to `style.json` (model, verbatim prompt prefix, key colour, aspect per asset type), paste the
