@@ -166,7 +166,7 @@ known characters, no studio logos). Generation costs credits per call: ask befor
 Status: run end to end once (2026-11-08, original Vietnamese-myth theme, Figma `generate_image`
 with `gpt-image-2.5-flare`, 4 calls, no reference image). Result: backdrop, hero, frame and an
 8-medallion symbol sheet all came out at painted quality in one shot each, and a code-composited
-screen (`scripts/compose_layered_screen.py`) reached Valkyrie-like layout and finish. What was
+screen (now `scripts/compose_screen.py`) reached Valkyrie-like layout and finish. What was
 learned:
 - Ask for the reel opening and the background of hero/symbols as **flat pure magenta (#FF00FF)**.
   Key it with a *strict* test (R>175, B>175, G<115, |R-B|<60, plus a 2 px halo only on pinkish
@@ -185,7 +185,7 @@ learned:
   one row per call keeps a family consistent. Card ranks A/K/Q/J/10 as bevelled lacquer glyphs
   with a fixed colour per rank worked first time and read clearly at 96 px. Wild (framed glowing
   tile), Scatter (round mandala) and Bonus (chest) have three different silhouettes. Do the
-  Wild multiplier badge ("x5") and the SCATTER tag **in code** (`scripts/build_symbol_set.py`),
+  Wild multiplier badge ("x5") and the SCATTER tag **in code** (`scripts/slice_symbols.py`),
   never in the prompt, and pad the tile before drawing the badge or it gets clipped.
   Readability check at 96 px in greyscale: shapes hold, but red Q, teal J and blue 10 converge to
   similar greys, so rank is told by glyph shape first and colour second; widen the lightness gap

@@ -12,7 +12,7 @@ Reading the result:
   - freeform premiums (no frame): every pair should be below --max-iou; fix pairs that exceed it.
   - roundel or tile premiums share one outline on purpose, so every pair scores high. That is not a
     defect; tell them apart by the object inside and the dominant colour, and check greyscale
-    readability instead (build_symbol_set.py makes that strip).
+    readability instead (slice_symbols.py makes that strip).
 Exit code 1 if any pair exceeds --max-iou.
 """
 import argparse, itertools, os, sys

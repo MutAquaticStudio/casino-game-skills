@@ -62,7 +62,7 @@ From the file names and sizes in the network log of Odin's Vault v13 (names and 
 - `assets/spines/character/` the mascot as a Spine character. Seen in play: the hero region moves while the reels are still (see `casino-symbol-art/references/animation-timing.md`).
 - `assets/spines/win_popups/` nice_win, big_win, mega_win, insane_win, max_win (with `_2` and `_3` variants): **five win tiers, each its own Spine animation**.
 - `assets/spines/intro_outro/` intro, intro_freegame2 to 4, totalwin: bonus intros per level and a TOTAL WIN plate.
-- `assets/sprites/reels`, `symbols`, `misc` (sprite sheets), `assets/spines/symbols/` (coins, highs, specials such as a staff): static symbols as sheets, animated ones as Spine.
+- under the game's `assets/` folder: `sprites/reels`, `symbols`, `misc` (sprite sheets) and `spines/symbols/` (coins, highs, specials such as a staff): static symbols as sheets, animated ones as Spine.
 - One audio sprite, one loader video, 28 PNG UI files (buttons and icons), fonts, JSON per Spine.
 Plan the same split for our own game: sheets for static things, Spine for backgrounds, the mascot, win tiers and bonus plates, one audio sprite.
 

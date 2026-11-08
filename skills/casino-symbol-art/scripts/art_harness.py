@@ -15,12 +15,14 @@ or "freeform" (each symbol is its own frameless object; stricter silhouette and 
 Writes:
   art/style.json            palette, warm accent, style_lock, style_check groups
   art/plan.json             ordered generation plan (anchors first), sizes, groups, key colour
+  art/motion.json           copy of symbol_fx.json (animation recipes), to tune per game
   art/prompts/<asset>.txt   the full prompt for each call: style lock first, then the asset part
 Then an agent calls the image tool once per prompt file with the exact text, saves results to
-art/layers/<asset>.png, and runs style_check.py (see SKILL.md section 1 and the study doc, part 7).
+art/layers/<asset>.png, runs style_check.py, then slice_symbols.py (cut the sheets), fx_sprites.py
+(win sprites) and compose_screen.py (preview), see SKILL.md section 5 and the study doc, part 7.
 Nothing here calls a model or spends credits.
 """
-import argparse, json, os, re, sys
+import argparse, json, os, re, shutil, sys
 
 KEY = "flat solid pure magenta (#FF00FF) background, no shadows on the background"
 BRANDS = re.compile(r"\b(valkyrie|hacksaw|stake|pragmatic|disney|marvel|nintendo|pokemon|pok[eé]mon|"
@@ -184,12 +186,14 @@ def main():
     pal = theme.get("palette", P["palette_default"]); warm = theme.get("warm_accent", P["warm_default"])
     style = {
         "theme": theme["title"], "preset": a.preset, "palette": pal, "warm_accent": warm, "light": "top-left",
+        "grid": {"cols": theme.get("cols", 5), "rows": theme.get("rows", 4)},
         "premium_container": container, "readability_rule": CONTAINERS[container]["read"],
         "style_lock": {"model": "set once and never change within a set", "prefix": prefix, "key": KEY,
                        "aspect": {"backdrop": "16:9", "sheet": "7:3", "single": "1:1"}},
-        "style_check": {"groups": {"symbol": ["symbols_*", "sym_*", "rank_*"], "background": ["backdrop*", "board*"], "tile": ["tile_*"],
+        "style_check": {"groups": {"symbol": ["symbols_premium*", "prem_*"], "rank": ["symbols_ranks*", "rank_*"], "background": ["backdrop*", "board*"], "tile": ["tile_*"],
                                    "frame": ["frame*"], "character": ["hero*"], "special": ["wild*", "scatter*", "bonus*"]},
-                        "tolerances": P["tol"], "exempt": {}},
+                        "tolerances": P["tol"],
+                        "exempt": {"rank_*": ["palette", "warm"], "symbols_ranks*": ["palette", "warm"]}}   # ranks keep a fixed colour each, by design,
     }
     json.dump(style, open(os.path.join(a.out, "style.json"), "w"), indent=2, ensure_ascii=False)
     plan = []
@@ -203,7 +207,10 @@ def main():
     json.dump({"preset": a.preset, "order_note": "generate anchors first (anchor=true), have the user approve them, then the rest; "
                "run style_check.py after each call; max 3 regenerations per asset", "plan": plan},
               open(os.path.join(a.out, "plan.json"), "w"), indent=2)
-    print(f"wrote {a.out}/style.json, {a.out}/plan.json and {len(plan)} prompts")
+    fx = os.path.join(os.path.dirname(os.path.abspath(__file__)), "symbol_fx.json")
+    if os.path.exists(fx):
+        shutil.copyfile(fx, os.path.join(a.out, "motion.json"))   # the round controller reads this; tune it per game
+    print(f"wrote {a.out}/style.json, {a.out}/plan.json, {a.out}/motion.json and {len(plan)} prompts")
     for p in plan:
         print(f"  {p['call']}. {p['asset']:16} {p['width']}x{p['height']}  anchor={p['anchor']}")
 
