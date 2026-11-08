@@ -296,8 +296,8 @@ Mỗi bước nhận đầu ra của bước trước và có một cổng kiể
 |---|---|---|---|---|
 | 1. Ý tưởng | `stake-casino-game-dev` (§7) | ý tưởng hoặc brief | tài liệu thiết kế: tầng cơ chế, bậc thang mode, danh sách event, chủ đề, lưới, RTP/wincap | qua kiểm tra luật (§2); mode đã chốt vì không thêm được sau duyệt |
 | 2. Toán học | `stake-casino-game-dev` (Phase 2) | tài liệu thiết kế | game_config, books, lookup table, `winLevel` | `validate_math.py` sạch |
-| 3. Art | `casino-symbol-art` | chủ đề, danh sách mode, kích thước symbol thật | `art/style.json` (có `style_lock`), atlas symbol, khung, nền guồng, nền, art win và chuyển cảnh | `style_check.py` không FAIL; test thu nhỏ và thang xám; art gốc |
-| 4. Frontend | `stake-casino-game-dev` (Phase 3) | books, atlas, danh sách event | bản build tĩnh nối RGS, HUD, win celebration, đa ngôn ngữ | `check_static_build.py` sạch; mọi loại event đều có handler |
+| 3. Art | `casino-symbol-art` | chủ đề, danh sách mode, kích thước symbol thật | `art/style.json` (có `style_lock`), `art/motion.json` (công thức animation), `art/fx/` (đĩa loé, vòng sáng, glint, bản "lit" của premium), atlas symbol, khung, nền guồng, nền, art win và chuyển cảnh | `style_check.py` không FAIL; test thu nhỏ và thang xám; art gốc |
+| 4. Frontend | `stake-casino-game-dev` (Phase 3, §8.5) | books, atlas, `art/motion.json`, danh sách event | bản build tĩnh nối RGS, HUD, win celebration, đa ngôn ngữ; vòng chơi theo quy tắc nhịp §8.5 (xoá bảng, nhịp trống, từng cột rơi vào, highlight thắng, HUD cập nhật sau) | `check_static_build.py` sạch; mọi loại event đều có handler |
 | 5. Âm thanh | `casino-audio-design` | danh sách event, bảng cấp win | file âm thanh + AudioManager | bảng event → âm thanh đầy đủ |
 | 6. Kiểm thử tích hợp | `stake-casino-game-dev` (Phase 4) | bản build | kết quả test tiền tệ, mode, kích thước | 10 lần thắng mỗi mode khớp RGS |
 | 7. Audit | `casino-game-audit` | build hoặc ảnh chụp | báo cáo chấm điểm | không còn lỗi chặn; mảng Graphics & art direction ≥ 4 |

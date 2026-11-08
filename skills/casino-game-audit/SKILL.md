@@ -61,6 +61,12 @@ Look at the screenshots yourself (open the images) rather than guessing from cod
   particles never cover numbers or winning symbols.
 - Reels: motion blur/speed stretch while spinning, clean bounce on stop, no visible symbol swap.
 - Turbo keeps essential FX and keeps results legible.
+- **Timing check** (from a recording or the live build; reference values from one game, so flag a deviation of about 2x, not 20 percent):
+  a whole round from clear to settled near 1.0 s (rolling reels: stops staggered about 0.16 s, spin plus stops near 1 to 1.5 s); columns or reels
+  entering with a visible stagger; a small-win highlight of 0.5 to 0.9 s, played once, that does not hide the symbols and does not need the others dimmed; the win amount near
+  the winning group and the HUD WIN field updating after the highlight, not before; special symbols (Wild, Scatter) that announce themselves when they land; a bonus that
+  keeps the base-game rhythm, with an intro plate and a TOTAL WIN plate that wait for the player. Measure with `casino-symbol-art/scripts/anim_probe.py` (`frames`, `montage`, `cycle`);
+  state the method and the frame rate in the report, and say which items could not be checked.
 
 ### D. Transitions between modes and scenes
 Check: base → feature trigger → bonus intro → bonus → retrigger → bonus summary → base;

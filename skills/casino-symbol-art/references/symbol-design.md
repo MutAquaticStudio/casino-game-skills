@@ -90,11 +90,13 @@ noted. Timings are starting values to tune by feel.
 
 | State | What it looks like | Art or code | Start values |
 |---|---|---|---|
-| `idle` | Static, optional slow shimmer on special symbols | Static art | Shimmer loop 2–4 s, low amplitude |
+| `enter` | Symbol falls into its column, columns about 0.16 s apart left to right | Code (`drop_in` in `scripts/symbol_fx.json`) | 0.25–0.45 s per column; whole round about 1.0 s |
+| `idle` | Static; the reference game's resting symbols did not move. Optional slow shimmer on special symbols only | Static art | Shimmer loop 2–4 s, low amplitude |
 | `spin` | Vertical stretch or blur while the reel is fast | Code (scale.y), optional blurred variant in atlas | scale.y ≈ 1.06–1.1 |
-| `land` | Small overshoot and settle | Code | 150–250 ms, scale 1 → ~1.08 → 1 (back-out) |
-| `win` | Pulse, glow and a short action; high pay gets a real animation | Code, plus layers/frames for high pay | 0.6–1.2 s loop |
-| `dim` | Everything that did not win recedes | Code (tint and alpha) | alpha ≈ 0.35–0.5, tint grey |
+| `land` | Small overshoot and settle | Code (`land`) | 150–300 ms, squash 1.10 x 0.88 then back to 1 |
+| `win` | **One-shot emissive swap**: flash disc (0 to 0.16 s), glow ring (to 0.40 s), glint (about 0.40 s), fade (by 0.65 s); no dimming of the others; high pay may add a drawn action on top | Code (`win`) plus three shared sprites: flash disc, glow ring, glint; a per-symbol "lit" variant only for premiums | about 0.65 s, measured on one reference game (`animation-timing.md` §2) |
+| `win` (long) | Repeating pulse for a highlight that must stay on screen | Code (`win_loop`) | 0.6–1.2 s loop |
+| `dim` | Optional: others recede when an overlay needs contrast. The reference game did not dim | Code (tint and alpha) | alpha ≈ 0.35–0.5, tint grey |
 
 Special symbols (Wild expand, Scatter land, Bonus trigger) usually need drawn animation. Plan
 their layers early (SKILL.md §3); `svg_to_atlas.py layers` exports them for Spine.

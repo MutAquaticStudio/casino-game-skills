@@ -113,6 +113,8 @@ gsap, and exercised in a browser.
 import { Container, Sprite, Texture } from 'pixi.js';
 import { gsap } from 'gsap';
 
+// Motion values for these states live in scripts/symbol_fx.json (recipes `drop_in`, `land`, `win`, `win_loop`; `idle` and `dim` are optional);
+// evaluate them with scripts/symbol_fx.mjs in the ticker. Round order and timing rules: stake-casino-game-dev §8.5.
 export type SymbolState = 'idle' | 'spin' | 'land' | 'win' | 'dim';
 
 export class SymbolView extends Container {
