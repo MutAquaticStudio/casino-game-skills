@@ -32,6 +32,7 @@ hand-painted art. If the user wants that look, write an art brief for an artist 
 | Symbols, icons, frames, flat or glossy look | SVG | §3 below, `references/svg-craft.md` |
 | Background, win-title scene, loading screen, key art, textured look | Raster | `references/raster-art.md` |
 | High-pay symbol with painterly texture | Raster (transparent sheet or cutout) | `references/raster-art.md` §3 |
+| "Premium slot look", "like Valkyrie / Hacksaw": scene structure, palette split, roundel premiums, rank colour code | Either | `references/style-valkyrie-hacksaw.md` (principles only; never copy their characters or logos) |
 
 ## 1. Style guide first
 Lock these before the first symbol, then save them as `art/style.json` so every later asset
