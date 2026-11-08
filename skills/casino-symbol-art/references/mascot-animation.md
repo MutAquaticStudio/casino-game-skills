@@ -11,11 +11,58 @@ amplitude and period were not recovered; only "continuous, mostly upper body" is
 | Tier | What | Input | Status |
 |---|---|---|---|
 | 1. Mesh idle from one image | breathing, head bob and tilt, weight shift, hem sway, feet planted; plus a `cheer` hop | one cut-out character PNG (the `hero` layer) | **Built and checked** with the official Spine 4.2 runtime (see below) |
-| 2. Layered parts rig | blinking, arm and tail motion, hair and cloth with their own bones | the character generated or painted as separate parts (head, eyes open and closed, torso, arms, hair, tail, cloth) | **Not built.** Image models do not reliably produce a character as clean separate parts that re-assemble exactly; untested here |
+| 2a. Parts rig cut from one image | each joint on its own bone: head at the neck, shoulder, elbow, held item, hair, pet, hem, feet; independent follow-through | one cut-out character PNG plus a small spec of part shapes and joint pivots | **Built and checked** (`spine_parts_rig.py`, below) |
+| 2b. Parts rig from separately generated or painted parts | blinking, mouth, hands, anything that needs hidden areas painted | the character as separate parts (head, eyes open and closed, torso, arms, hair, tail, cloth) | **Not built.** Image models do not reliably produce clean separate parts that re-assemble exactly; untested here |
 | 3. Hand-rigged Spine | full animation set, mesh deform per part, constraints | layered PSD or part PNGs from an artist | Out of scope for generation: write an artist brief (`symbol-design.md` §7) listing parts, pivots and animation set |
 
-Tier 1 cannot do eyes, mouth, fingers or separate limbs, because the character is one mesh. If the
-game design needs a blink or a waving hand, go to tier 2 or 3 for that character.
+Tier 1 cannot do eyes, mouth, fingers or separate limbs, because the character is one mesh, and it
+has a second weakness that was reported on review: it **stretches the art** and cannot tell which
+joint is moving, since weights are height bands rather than bones at real joints. Use tier 1 only
+for a quick subtle idle on a character you do not need to articulate. For anything with limbs, held
+items or a pet, use tier 2a.
+
+## Tier 2a: parts rig with real joints (`spine_parts_rig.py`)
+Rigid parts (Spine region attachments) on a bone hierarchy placed at the joints, so nothing stretches;
+a part only rotates around its own joint. Steps:
+1. Cut the character out (flat key colour, then `spine_idle_rig.py`'s key step or `raster_cutout.py`).
+2. Draw a coordinate grid over the image and read pixel coordinates for each joint and part. Example
+   spec: `references/examples/mascot_parts_spec.example.json` (priestess with spear and spirit dragon,
+   12 bones: hip, chest, head, hair, shoulder and elbow per arm, spear, dragon, skirt, feet).
+   Parts are polygons, `capsules` (thin long shapes: spear, limbs) or `circles`, listed back to front.
+   One part is `catch_all` and gets every pixel nobody claimed.
+3. Build, then check the cut with the colour-coded ownership image:
+```sh
+python3 skills/casino-symbol-art/scripts/spine_parts_rig.py spec.json --out art/rig --name mascot --debug
+```
+4. **Joint test** (this is how you see that each bone moves at the right joint): the rig contains a
+   `joint_test` animation that swings each bone alone by 18 degrees.
+```sh
+python3 skills/casino-symbol-art/scripts/spine_preview.py art/rig/mascot --joint-sheet --out art/rig/prev            # all bones
+python3 skills/casino-symbol-art/scripts/spine_preview.py art/rig/mascot --joint-sheet --only head,forearm_L --scale 0.8 --out art/rig/key
+```
+   Each panel marks the pivot (yellow ring). Pass: the part swings around the ring, with no stretched
+   art, no piece left behind, and neighbouring parts still overlap. Fix pivots and polygons, rebuild.
+5. `idle` and `cheer` previews as in tier 1 (`--anim idle`, `--anim cheer`), then look at the strip for
+   doubled shapes.
+
+How it avoids gaps and ghosts: each part is extended `overlap` px (default 8) underneath its neighbours,
+so small rotations do not open a seam; stray pieces of the catch-all part that are not connected to its
+main body (a missed spear ornament, a hair wisp) are handed to the nearest part automatically, because
+otherwise they stay behind as a ghost when that object moves (`--no-adopt` turns this off).
+
+Results on the priestess (721×997): the first cut left a doubled spear in `cheer` (my spear polygon was
+too narrow); capsules plus the stray-piece rule fixed it, and the joint test now shows head, shoulder,
+elbow and held spear each turning at their own pivot. Final numbers: idle largest vertex displacement
+32.5 px (3.3% of height, `--amp 0.5`), feet 0.0 px; cheer 131 px with feet hopping 18 px; no ghost
+in the rendered cheer strip. The crack check (new thin seams during motion) reads 237 px in idle and
+989 px in cheer against about 5,500 px of seams already present at rest in the artwork itself (hair strands,
+cloth edges); it is a number to watch, not a pass or fail on its own.
+
+Limits of 2a: parts are rigid, so cloth and hair bend only as separate parts; the area hidden under a
+part is a copy of neighbouring pixels (the overlap), not painted art, so rotations beyond about 10 degrees
+show edges (the 18 degree joint test is deliberately harsh); polygons are hand-authored from a grid and
+need one or two correction rounds; a tiny stray speck remained near one foot in `cheer`. Blinking and
+hands need 2b.
 
 ## Tier 1: how to use
 ```sh
@@ -26,7 +73,7 @@ python3 skills/casino-symbol-art/scripts/spine_idle_rig.py art/layers/hero.png -
 
 # 2. verify with the official runtime and look at it (needs: npm i @esotericsoftware/spine-core@4.2,
 #    pip install opencv-python-headless)
-python3 skills/casino-symbol-art/scripts/spine_preview.py art/rig/mascot --anim idle --duration 3.2 --frames 32 --out art/rig/preview
+python3 skills/casino-symbol-art/scripts/spine_preview.py art/rig/mascot --anim idle --duration 3.2 --frames 32 --out art/rig/preview   # works for tier 1 and tier 2a rigs
 python3 skills/casino-symbol-art/scripts/spine_preview.py art/rig/mascot --anim cheer --duration 1.4 --frames 28 --out art/rig/preview
 ```
 Output: `mascot.json` (Spine 4.2 skeleton, one weighted mesh, bones root, hip, chest, head, skirt, feet),
