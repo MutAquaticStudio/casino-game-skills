@@ -1,6 +1,6 @@
 ---
 name: "casino-symbol-art"
-description: "Create and export 2D art for casino/slot games on PixiJS: slot symbols (low/high pay, Wild, Scatter, Bonus, card ranks), state variants, win-title art, reel frames, backgrounds and icons as layered SVG, with a style guide, readability checks at real reel size, lint for Stake-safe files, and spritesheet export for Pixi v8. Use for any request to design, draw, redo or produce symbols or other 2D assets for a slot, even if the user does not say SVG or Pixi."
+description: "Create and export 2D art for casino/slot games on PixiJS: slot symbols (low/high pay, Wild, Scatter, Bonus, card ranks), state variants, win-title art, reel frames, backgrounds and icons as layered SVG or painterly raster (code-painted, 80+ styles), with a style guide, readability checks at real reel size, lint for Stake-safe files, background cutout, and spritesheet export for Pixi v8. Use for any request to design, draw, redo or produce symbols or other 2D assets for a slot, even if the user does not say SVG or Pixi."
 ---
 
 # Casino symbol art
@@ -19,10 +19,19 @@ user's language; keep file names, code and Stake terms in English.
   paths (or a bitmap font), never `<text>`.
 - Readable in the 400×225 popout and on a phone: judge every symbol at its real on-screen size.
 
-**What this makes, and what it doesn't.** Vector and procedural art: flat, glossy casino,
-bevelled gems and coins, ornate frames, card ranks, icons, themed titles. It does not replace
-painterly hand art or photoreal rendering. If the user wants that look, write an art brief
-for an artist (see `references/symbol-design.md` §7) and use this skill for the pipeline.
+**What this makes, and what it doesn't.** Two routes. **Vector SVG** (default): flat, glossy
+casino, bevelled gems and coins, ornate frames, card ranks, icons, themed titles. **Code-painted
+raster** (`references/raster-art.md`): textured looks such as ink, oil, watercolour, mosaic,
+stained glass, comic, pixel art, mostly for backgrounds and title scenes, and for high-pay
+symbols via a transparent sheet or cutout. Neither replaces photoreal rendering or true
+hand-painted art. If the user wants that look, write an art brief for an artist (see
+`references/symbol-design.md` §7) and use this skill for the pipeline.
+
+| Need | Route | Read |
+|---|---|---|
+| Symbols, icons, frames, flat or glossy look | SVG | §3 below, `references/svg-craft.md` |
+| Background, win-title scene, loading screen, key art, textured look | Raster | `references/raster-art.md` |
+| High-pay symbol with painterly texture | Raster (transparent sheet or cutout) | `references/raster-art.md` §3 |
 
 ## 1. Style guide first
 Lock these before the first symbol, then save them as `art/style.json` so every later asset
@@ -68,6 +77,9 @@ One file per asset, `art/svg/<name>.svg`:
   with padding, otherwise glows are cut to a hard box.
 - Use palette values from `style.json`; do not invent hex codes mid-set.
 - Silhouette first: the shape must identify the symbol before colour or detail does.
+- Hard parts (arc flags, gradients, masks, filters, icon grids, SVGO without breaking layer
+  ids): `references/svg-craft.md` routes to the vendored svg-design guides and lists where this
+  skill overrides them.
 
 ## 4. Check before showing anyone
 ```bash
@@ -94,6 +106,8 @@ changes are cheap early and expensive after twelve symbols.
 ```bash
 python3 scripts/svg_to_atlas.py build art/svg --out public/assets/symbols --size 160 --scales 1,2
 ```
+`build` and `preview` also pack raster symbols: any `<name>.png` (transparent RGBA) in the
+folder is scaled to the cell and packed like an SVG; an SVG with the same name wins.
 Writes `symbols@1x.json/.png` and `symbols@2x.json/.png`, TexturePacker-style JSON with
 `meta.scale`, a default 0.5/0.5 anchor and untrimmed frames, so every symbol shares one cell.
 Frame names are the file names (`ruby`, `wild`). Validated against PixiJS 8.22: `Assets` resolves
@@ -118,14 +132,15 @@ Loading code, a `SymbolView` sketch, Spine hand-off and the bundle layout:
 `references/export-and-pixi.md`.
 
 ## 6. Other 2D assets
-Same loop (style guide → SVG → preview → export), different canvases. Sizes and rules per asset
+Same loop (style guide → SVG or raster → preview → export), different canvases. Sizes and rules per asset
 are in `references/symbol-design.md` §6:
 reel frame and board (9-slice friendly), background (≥ 2 parallax layers, kept calm behind the
 reels), win-tier title art (Big / Mega / Epic / Legendary / Max Win, from `stake-casino-game-dev`
 §8), HUD icons (follow the simplicity-first rule in §13.0 there), loading logo, thumbnail.
 
 ## 7. Hand-off
-Deliver the folder, not loose files: `art/style.json`, `art/svg/`, `art/preview.png`,
+Deliver the folder, not loose files: `art/style.json`, `art/svg/` (SVG and any PNG symbols),
+`art/preview.png`,
 `public/assets/symbols*.{json,png|webp}`. Give two or three sentences: what was made, anything
 that needs a decision (a symbol that fails the greyscale test, an atlas near the budget), and
 one next step (animation pass, win title art, or running `casino-game-audit` on a build).
@@ -139,3 +154,11 @@ one next step (animation pass, win title art, or running `casino-game-audit` on 
 - `@2x` file with `meta.scale` "1" (or the reverse) renders at the wrong size in Pixi v8; the
   script writes them consistently, so do not hand-edit the JSON.
 - Many near-identical high-pay symbols. Vary silhouette and dominant colour, not just detail.
+- Mixing routes or painting engines inside one symbol set. Pick SVG or one raster module per set
+  and record it in `style.json`.
+- Painted text in backgrounds or title art. Text must stay live (bitmap font or paths) for
+  localisation; leave the area empty in the render.
+- Halo of the key colour after `raster_cutout.py`. Re-run with a different `--key`, higher
+  `--tolerance`, or paint on a key colour far from the symbol palette; check on dark and light.
+- Copying an example scene or a reference image from the vendored toolkits as game art. Stake
+  needs original art; the examples are for learning the API.
