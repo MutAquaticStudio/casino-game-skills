@@ -106,3 +106,61 @@ From the 20-cover sheet. There is **no single rendering style**; the catalogue s
 - [ ] Logo is bevelled, outlined, and readable at 40% size.
 - [ ] Hero/mascot sits outside the reel window and does not cover any symbol.
 - [ ] No text as `<text>`; no copied character, logo or brand.
+
+## 5. Studio-wide template and catalogue survey (Valkyrie, 10 public demos played)
+
+Played or screenshotted: Loki's Vault, Angel of Asgard, Red Strike, Castle of Ymir, Four-Leaf
+Fortune, High Elf, Waylander's Forge, Wings of Valhalla, Tiki Wiki Wild, Tome of Hades, Tome of
+Hercules, Waylanders Cup. About 40 other titles listed on the studio site have no public demo.
+
+**The template never changes; only the art theme does.** This is what makes a catalogue look like
+one studio.
+| Slot | Fixed position / behaviour |
+|---|---|
+| Logo | top-left (or top-centre on the frame for Four-Leaf Fortune, High Elf), bevelled, outlined |
+| Hero / mascot | big, full body, left of the reels (right on Tome series), partly overlapping the frame |
+| Frame | themed material wrapping the grid: carved stone/ice, timber, vines, iron, marble |
+| Reel board | dark tile, grid varies (5×4, 6×4, 6×5, 7×7, 5×5) |
+| Side widget | one framed panel for a mechanic (wild upgrade table, multiplier plate, orb meter) |
+| Bottom bar | identical in every game: bonus-buy icon, menu, balance, win, bet stepper, autoplay, big circular spin button |
+| Backdrop | full painted scene, one clear location per game |
+
+**Observed range per theme (copy the range, not the content):**
+- Ice/Norse: desaturated blue-grey, snow on frame, rune carving (Loki, Castle of Ymir).
+- Aurora/valkyrie: violet-magenta sky, red or cyan moon, warm gold on metal (Angel, Wings).
+- Fairy-tale pastoral: saturated greens/orange, rainbow, mushrooms and flowers in the foreground
+  (Four-Leaf Fortune, High Elf), timber frame with vines.
+- Underworld/Greek: dark stone, torches, red/blue gemstone symbols, hero on the right (Tome series).
+- Tropical: tiki totem mascot, fruit symbols, bamboo frame (Tiki Wiki Wild).
+- Sport/cartoon: stadium crowd backdrop, grass, kit-coloured symbols, mascot (Red Strike, Waylanders Cup).
+
+**Symbol families observed:** card ranks as themed glyphs with fixed colour per rank; premiums
+as objects in a consistent container; gems as faceted shapes in 4–5 hues (Tome series); Wild as
+a framed glowing tile carrying a multiplier badge (x5, x10, x15) in an ice-blue or gold variant;
+Scatter with a text tag ("SCATTER", "SUPER SCATTER") on the symbol.
+
+**Not captured, do not assume:** the win celebration (big-win titles, count-up, coin bursts) and
+bonus-round transitions. The recording only caught base-game spins with small wins; the studio
+site then stopped serving the game frame (rate limit) before the bonus-buy menu could be opened.
+Treat celebrations as an open item; verify with a fresh capture before writing a spec.
+
+## 6. Reaching painted quality: what an agent can and cannot do
+
+The art above is painted semi-realistic illustration. Code-drawn SVG cannot reach it; the gap is
+in the rendering, not in the planning. A realistic pipeline for an agent:
+1. Lock the template (table in §5) and the style guide (`art/style.json`) first.
+2. Generate **separate layers** with an image model, never one flat screenshot: backdrop (no
+   UI), hero on a flat key colour, frame (empty centre), each premium symbol on a flat key colour,
+   logo. One prompt per layer, same style sentence reused verbatim, same light direction.
+3. Cut out with `scripts/raster_cutout.py`, normalise to the cell size, pack with
+   `svg_to_atlas.py`-style atlas export, wire in Pixi (`export-and-pixi.md`).
+4. Draw by code what code does well: bottom bar, bet stepper, spin button, rank glyphs,
+   multiplier badges, win text, particles.
+5. Judge at real size against the checklist in §4. Reject and regenerate any layer whose
+   silhouette, palette or light direction drifts from the guide.
+
+Limits: image models drift between calls (palette, outline weight, light), so consistency
+needs the same reference image passed to every call plus a rejection loop; transparent
+backgrounds usually need a key colour and a cutout; originality still has to be checked (no
+known characters, no studio logos). Generation costs credits per call: ask before spending.
+Status: this route is specified here but has not been run end to end.
