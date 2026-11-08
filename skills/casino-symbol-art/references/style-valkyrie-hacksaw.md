@@ -176,6 +176,11 @@ learned:
   Split the sheet by connected components after closing small gaps.
 - Request the frame with an **empty magenta window**, then fill that window with a dark tile in
   code and composite the frame on top of the symbols.
+- Reel board is its own layer: generate a dark texture with a **faint engraved motif** (10–15%
+  contrast, centred ring fading to the edges) and add **column dividers** (thin gold line with a
+  dark shadow either side) plus an inner edge vignette. Valkyrie boards are near-black but never
+  flat: Loki has an engraved ring, Red Strike a hex pattern, Tome of Hades/Hercules and Waylanders
+  Cup have metal or groove dividers between columns. A plain fill (first mockup) reads as unfinished.
 - Draw by code: bottom bar, balance/win/bet text, spin button. The placeholder spin button in the
   script is crude; replace it with a generated or hand-built icon.
 - Still open: reference-image conditioning for cross-call consistency (not tried), win

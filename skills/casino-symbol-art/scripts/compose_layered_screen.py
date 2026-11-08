@@ -37,8 +37,27 @@ if n:
     sizes = ndi.sum(hole,lab,range(1,n+1)); big = lab==(1+int(np.argmax(sizes)))
 else: big = hole
 board = Image.new('RGBA',fr.size,(0,0,0,0))
-tile = np.zeros((fr.height,fr.width,4),np.uint8); tile[big]=(14,18,26,235)
-board = Image.fromarray(tile,'RGBA')
+ys0,xs0 = np.where(big); x0,x1,y0,y1 = xs0.min(),xs0.max(),ys0.min(),ys0.max()
+tex = Image.open('gen/board.png').convert('RGB').resize((x1-x0+1,y1-y0+1), Image.LANCZOS)
+# lift the pattern slightly so engraving is visible but still low contrast
+tex = Image.eval(tex, lambda v: min(255,int(v*1.35)+6))
+tile = Image.new('RGBA',fr.size,(0,0,0,0)); tile.paste(tex.convert('RGBA'),(x0,y0))
+tm = np.zeros((fr.height,fr.width),np.uint8); tm[big]=255
+tile.putalpha(Image.fromarray(tm))
+board = tile
+# column dividers (thin gold line with dark shadow) + inner vignette
+bd = ImageDraw.Draw(board,'RGBA')
+colw=(x1-x0)/5
+for k in range(1,5):
+    x=int(x0+k*colw)
+    bd.line((x-2,y0,x-2,y1),fill=(0,0,0,150),width=3)
+    bd.line((x,y0,x,y1),fill=(214,170,80,190),width=2)
+    bd.line((x+2,y0,x+2,y1),fill=(0,0,0,120),width=2)
+vig = Image.new('L',fr.size,0); vd=ImageDraw.Draw(vig); vd.rectangle((x0,y0,x1,y1),fill=255)
+vig = vig.filter(ImageFilter.GaussianBlur(28))
+shade = Image.new('RGBA',fr.size,(0,0,0,150)); 
+inv = Image.eval(vig, lambda v:255-v); shade.putalpha(Image.fromarray((np.asarray(inv).astype(np.int32)*np.asarray(tm)//255).astype(np.uint8)))
+board.alpha_composite(shade)
 canvas.alpha_composite(board,(fx,fy))
 ys,xs = np.where(big); bx0,bx1,by0,by1 = xs.min(),xs.max(),ys.min(),ys.max()
 
@@ -81,4 +100,4 @@ for x,l,v in [(280,'BALANCE','$1,000.00'),(560,'WIN','$0.00'),(760,'BET','$1.00'
 cx,cy=1100,H-52
 d.ellipse((cx-40,cy-40,cx+40,cy+40),fill=(10,14,20,240),outline=(255,255,255,255),width=5)
 d.arc((cx-20,cy-20,cx+20,cy+20),40,330,fill=(255,255,255,255),width=6)
-canvas.convert('RGB').save('shots/mockup_vn_myth.png')
+canvas.convert('RGB').save('shots/mockup_vn_myth_v2.png')
