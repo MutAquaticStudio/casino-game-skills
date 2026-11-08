@@ -10,6 +10,7 @@ Save as `art/style.json` and read it before drawing anything.
 {
   "theme": "Viet myth, warm lacquer and gold",
   "render": "glossy-casino",
+  "engine": "svg",
   "canvas": 256,
   "padding": 20,
   "realSize": 140,
@@ -28,6 +29,10 @@ Save as `art/style.json` and read it before drawing anything.
   "accentRole": "Wild and Bonus only"
 }
 ```
+
+`engine` is `"svg"` or, for code-painted raster sets, `"claude-drawing/<module>"` (for example
+`"claude-drawing/oilpaint"`) together with `"seed": <int>` so the set can be re-rendered
+(`raster-art.md`). Keep one engine per set.
 
 Palette starters (adjust to the concept; these are starting points, not rules):
 
@@ -143,6 +148,9 @@ one page:
    uniqueness rule (no third-party IP).
 6. Delivery: one folder per symbol, file naming (`ruby.png`, `ruby_win_01.png`), schedule.
 
-`svg_to_atlas.py build` only reads SVG. For PNGs delivered by an artist, pack them with
-TexturePacker or free-tex-packer using the same settings as `export-and-pixi.md` §1 (padding,
-extrude, `@1x`/`@2x` naming, `meta.scale` matching the image).
+`svg_to_atlas.py build` and `preview` read SVG and transparent PNG. For PNGs delivered by an
+artist, put them in `art/svg/` (square, same canvas, transparent) and run `build`; if they
+come on an opaque background run `scripts/raster_cutout.py` first. Raster symbols cannot use
+the `layers` export, so ask for named layers as separate PNGs when a symbol needs animation.
+TexturePacker or free-tex-packer also work, with the same settings as `export-and-pixi.md` §1
+(padding, extrude, `@1x`/`@2x` naming, `meta.scale` matching the image).

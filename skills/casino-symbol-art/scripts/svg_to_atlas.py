@@ -7,7 +7,13 @@ Subcommands
   layers   <svg_dir> --out art/layers     each top-level named <g> -> full-canvas PNG (Spine input)
   build    <svg_dir> --out dist/symbols   render + pack -> symbols@1x/@2x .png + .json
 
-Needs Pillow and one SVG renderer: `rsvg-convert` (librsvg) or `pip install cairosvg`.
+`preview` and `build` also accept raster symbols: any `<name>.png` (transparent RGBA, e.g. from
+scripts/raster_cutout.py or the painterly toolkit) in the folder is scaled to the cell width and
+packed like an SVG. If `<name>.svg` and `<name>.png` both exist, the SVG wins. `lint` and
+`layers` only look at SVG files.
+
+Needs Pillow and one SVG renderer: `rsvg-convert` (librsvg) or `pip install cairosvg`
+(only when the folder has SVG files; a PNG-only folder needs just Pillow).
 Output JSON is the TexturePacker-style format PixiJS reads with Assets.load('symbols.json').
 Frames are NOT trimmed on purpose: every symbol keeps the same cell, so anchors, win
 animations and reel strips line up without per-frame offsets.
@@ -39,8 +45,22 @@ def find_svgs(folder):
     return files
 
 
+def find_sources(folder):
+    """SVG and PNG symbols in one folder, sorted by name; an SVG beats a PNG with the same stem."""
+    found = {p.stem: p for p in Path(folder).glob("*.png")}
+    found.update({p.stem: p for p in Path(folder).glob("*.svg")})
+    if not found:
+        sys.exit(f"No .svg or .png files in {folder}")
+    return [found[k] for k in sorted(found)]
+
+
 def render_svg(svg, width):
-    """Render to an RGBA image `width` px wide (height follows the viewBox)."""
+    """Render to an RGBA image `width` px wide (height follows the viewBox / PNG aspect)."""
+    if Path(svg).suffix.lower() == ".png":
+        im = Image.open(svg).convert("RGBA")
+        if im.width == width:
+            return im
+        return im.resize((width, max(1, round(im.height * width / im.width))), Image.LANCZOS)
     if shutil.which("rsvg-convert"):
         out = subprocess.run(
             ["rsvg-convert", "-w", str(width), "--format", "png", str(svg)],
@@ -374,13 +394,14 @@ def main():
     p.add_argument("--pot", action="store_true", help="force power-of-two atlas sides (default: tight, multiple of 4)")
 
     a = ap.parse_args()
-    files = find_svgs(a.svg_dir)
     if a.cmd == "lint":
-        sys.exit(lint(files))
+        sys.exit(lint(find_svgs(a.svg_dir)))
+    if a.cmd == "layers":
+        export_layers(find_svgs(a.svg_dir), a.out, a.size)
+        return
+    files = find_sources(a.svg_dir)
     if a.cmd == "preview":
         preview(files, a.out, a.cell, a.shrink, a.cols)
-    elif a.cmd == "layers":
-        export_layers(files, a.out, a.size)
     else:
         scales = [float(s) for s in a.scales.split(",") if s.strip()]
         build(files, a.out, a.size, scales, a.padding, a.extrude, a.max_size, a.format, a.quality, a.anchor, a.pot)

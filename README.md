@@ -7,7 +7,7 @@ Bộ **Agent Skills** (định dạng `SKILL.md`) giúp Claude thiết kế, xâ
 | [`stake-casino-game-dev`](skills/stake-casino-game-dev/SKILL.md) | Quy trình đầy đủ: lên ý tưởng game có chiều sâu và nhiều mode, toán học (Math SDK, RTP, wincap), tích hợp RGS, frontend PixiJS/Three.js, win celebration chuẩn Stake, đa ngôn ngữ, replay, checklist nộp duyệt |
 | [`casino-game-audit`](skills/casino-game-audit/SKILL.md) | Audit chất lượng: đồ hoạ, render, hiệu ứng, chuyển cảnh giữa các mode, giao diện cược, khoảng cách và font chữ, win celebration, âm thanh, đa ngôn ngữ. Chấm điểm và báo cáo lỗi theo thứ tự ưu tiên |
 | [`casino-audio-design`](skills/casino-audio-design/SKILL.md) | Thiết kế và lập trình âm thanh: nhạc base/bonus, hiệu ứng guồng quay, nhạc cấp thắng, mixing, Howler/Web Audio, brief cho người làm nhạc, kiểm tra âm thanh |
-| [`casino-symbol-art`](skills/casino-symbol-art/SKILL.md) | Tạo art 2D cho game slot: style guide, symbol (low/high pay, Wild, Scatter, Bonus, bài) dạng SVG nhiều layer, kiểm tra độ đọc được ở kích thước thật và popout, xuất spritesheet cho PixiJS v8, tách layer cho Spine, art win title/khung guồng/nền/icon, brief cho hoạ sĩ |
+| [`casino-symbol-art`](skills/casino-symbol-art/SKILL.md) | Tạo art 2D cho game slot: style guide, symbol (low/high pay, Wild, Scatter, Bonus, bài) dạng SVG nhiều layer, kiểm tra độ đọc được ở kích thước thật và popout, xuất spritesheet cho PixiJS v8, tách layer cho Spine, art win title/khung guồng/nền/icon, brief cho hoạ sĩ. Có hai hướng: SVG vẽ tay (kèm bộ hướng dẫn svg-design) và art raster vẽ bằng code với hơn 80 phong cách (nền, màn win, symbol có texture) |
 
 ---
 
@@ -33,7 +33,7 @@ Mở lại Claude Code. Gõ `/skills` để kiểm tra 4 skill đã hiện.
 ### Công cụ cần cho script
 ```sh
 pip install zstandard          # để đọc file books .jsonl.zst
-pip install pillow             # cho casino-symbol-art/scripts/svg_to_atlas.py
+pip install pillow numpy       # cho casino-symbol-art/scripts (svg_to_atlas.py, raster_cutout.py) và thư viện vẽ bằng code
 # cùng một bộ render SVG: librsvg (lệnh rsvg-convert, vd: apt install librsvg2-bin / brew install librsvg)
 # hoặc: pip install cairosvg
 ```
@@ -222,6 +222,17 @@ Tách layer symbol rồng để làm animation Spine cho vòng quay thắng lớ
 Viết brief cho hoạ sĩ vẽ tay bộ symbol này, kèm thông số kỹ thuật và tiêu chí đọc được.
 ```
 
+**Hai hướng làm art:**
+- **SVG** (mặc định): symbol, icon, khung, kiểu flat hoặc glossy casino. Phần khó (cung tròn, gradient, mask, filter, tối ưu SVGO mà không làm mất tên layer) có hướng dẫn trong `references/svg-craft.md`, dựa trên bộ [svg-design](https://github.com/tryopendata/skills) (plugin opendesign).
+- **Raster vẽ bằng code**: nền, màn win, loading, key art, và symbol cao cấp có texture (mực, sơn dầu, màu nước, mosaic, kính màu, comic, pixel…). Dùng thư viện numpy + Pillow của [claude-drawing-skill](https://github.com/cloveric/claude-drawing-skill) với 82 phong cách. Xem `references/raster-art.md`.
+
+```
+Làm nền base game và nền bonus cho slot chủ đề Ai Cập cổ, kiểu tranh tường mộ cổ, giữ vùng giữa yên tĩnh cho guồng quay.
+```
+```
+Vẽ symbol High 1 là mặt nạ vàng bằng sơn dầu, tách nền, rồi xuất atlas cùng các symbol SVG.
+```
+
 Script đi kèm (cần `pillow` và `rsvg-convert` hoặc `cairosvg`, xem mục 1):
 ```sh
 python3 skills/casino-symbol-art/scripts/svg_to_atlas.py lint    art/svg      # file SVG an toàn cho Stake chưa
@@ -232,7 +243,8 @@ python3 skills/casino-symbol-art/scripts/svg_to_atlas.py build   art/svg --out p
 - `lint`: báo URL ngoài, `<text>`, script, thiếu viewBox, trùng id gradient, canvas không đồng nhất.
 - `preview`: bản full size trên nền caro và bản **kích thước thật trong guồng** trên nền tối. Luôn mở ảnh này ra xem, đừng chỉ tin code render được.
 - `layers`: xuất mỗi `<g id>` cấp cao thành PNG cùng canvas, kèm `layers.json` ghi thứ tự xếp lớp, để đưa vào Spine.
-- `build`: ra `symbols@1x/@2x.json + .png (hoặc .webp)` theo định dạng Pixi đọc thẳng, `meta.scale` khớp ảnh. Đã kiểm tra nạp được bằng PixiJS 8.22.
+- `build`: ra `symbols@1x/@2x.json + .png (hoặc .webp)` theo định dạng Pixi đọc thẳng, `meta.scale` khớp ảnh. Đã kiểm tra nạp được bằng PixiJS 8.22. `build` và `preview` nhận cả file PNG trong suốt đặt chung thư mục (SVG trùng tên thì SVG thắng).
+- `raster_cutout.py`: tách nền cho ảnh raster (màu key hoặc tự dò từ 4 góc, flood-fill từ viền nên màu giống nền nằm bên trong symbol vẫn giữ), làm mềm và khử viền, cắt và căn giữa vào ô vuông. Ví dụ: `python3 skills/casino-symbol-art/scripts/raster_cutout.py art/raw art/svg --cell 512 --key "#ff00ff"`.
 
 Giới hạn: đây là art vector/procedural (flat, glossy casino, gem, coin, khung hoa văn). Không thay được art vẽ tay kiểu painterly; khi cần, skill viết brief cho hoạ sĩ và vẫn dùng phần pipeline. Luật Stake vẫn áp dụng: art phải độc quyền, không dùng nhân vật/thương hiệu có bản quyền, không dùng asset mẫu của Web SDK.
 
@@ -276,12 +288,15 @@ skills/
 ├── casino-audio-design/SKILL.md
 └── casino-symbol-art/
     ├── SKILL.md
-    ├── scripts/        svg_to_atlas.py (lint, preview, layers, build)
-    └── references/     symbol-design.md, export-and-pixi.md
+    ├── scripts/        svg_to_atlas.py (lint, preview, layers, build), raster_cutout.py
+    └── references/     symbol-design.md, export-and-pixi.md, svg-craft.md, raster-art.md,
+                        vendor/ (svg-design/, claude-drawing/)
 ```
 
 ## 10. Nguồn và giấy phép
 - Tài liệu và SDK của Stake Engine: https://github.com/StakeEngine (Math SDK dùng giấy phép MIT). Dự án này không liên kết với Stake hay Stake Engine.
 - Skill PixiJS chính thức lấy từ gói npm `pixi.js@8.22.0` ([pixijs/pixijs](https://github.com/pixijs/pixijs)), giấy phép MIT, xem `references/pixijs/vendor/LICENSE`.
 - Hướng dẫn Three.js lấy từ [CloudAI-X/threejs-skills](https://github.com/cloudai-x/threejs-skills), giấy phép MIT, xem `references/threejs/vendor/LICENSE`.
+- Hướng dẫn SVG (`casino-symbol-art/references/vendor/svg-design`) lấy từ [tryopendata/skills](https://github.com/tryopendata/skills), plugin opendesign v1.3.2, giấy phép MIT, xem `LICENSE` trong thư mục đó.
+- Thư viện vẽ bằng code (`casino-symbol-art/references/vendor/claude-drawing`: `lib/`, `examples/*.py`, tài liệu) lấy từ [cloveric/claude-drawing-skill](https://github.com/cloveric/claude-drawing-skill), giấy phép MIT, xem `LICENSE` trong thư mục đó. Không kèm ảnh render mẫu (151 MB). Xem `references/vendor/README.md` để biết đã đổi gì so với bản gốc.
 - Hướng dẫn game dev lấy từ [gamedev-skills/awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills), giấy phép Apache-2.0, xem `references/gamedev/vendor/LICENSE` và `NOTICE`.
