@@ -256,7 +256,7 @@ python3 skills/casino-symbol-art/scripts/svg_to_atlas.py build   art/svg --out p
 - `preview`: bản full size trên nền caro và bản **kích thước thật trong guồng** trên nền tối. Luôn mở ảnh này ra xem, đừng chỉ tin code render được.
 - `layers`: xuất mỗi `<g id>` cấp cao thành PNG cùng canvas, kèm `layers.json` ghi thứ tự xếp lớp, để đưa vào Spine.
 - `build`: ra `symbols@1x/@2x.json + .png (hoặc .webp)` theo định dạng Pixi đọc thẳng, `meta.scale` khớp ảnh. Đã kiểm tra nạp được bằng PixiJS 8.22. `build` và `preview` nhận cả file PNG trong suốt đặt chung thư mục (SVG trùng tên thì SVG thắng).
-- `compose_layered_screen.py` (cần `pillow`, `numpy`, `scipy`): ghép các lớp do mô hình sinh thành một màn slot: tách nền magenta bằng bộ lọc nghiêm ngặt, đặt nền guồng có hoa văn và vạch chia cột, xếp symbol, nhân vật, khung, thanh điều khiển vẽ bằng code. Là bản mẫu để sửa theo game của bạn, đọc `references/style-valkyrie-hacksaw.md` §6 trước.
+- `compose_screen.py` (cần `pillow`, `numpy`, `scipy`): đọc thư mục `art/` do harness tạo và ghép các lớp thành một màn xem trước, bố cục `--layout pc` hoặc `--layout phone` theo số đo trong `layout-wireframes.md`: nền, bàn chơi có hoa văn nằm trong khung, symbol (có một Wild và một Scatter để so), nhân vật, thanh điều khiển vẽ bằng code. Chỉ để đánh giá cả bộ như một bức tranh, không phải bộ render của game. Khung sinh ra theo chiều ngang nên trên điện thoại còn dải trống: script in cảnh báo và chỉ sang `mobile_layout.py`.
 - `art_harness.py`: nhận một file theme (nơi chốn, nhân vật, 8 vật thể premium, bảng màu) và sinh `art/style.json` cùng một prompt khoá cho từng lớp, đã mang sẵn cấu trúc studio lớn (preset `valkyrie` hoặc `hacksaw`). Chọn kiểu symbol premium bằng `premium_container`: `roundel` (huy hiệu tròn), `tile` (ô vuông bo góc) hoặc `freeform` (mỗi symbol là một vật thể tự do, không khung). Từ chối theme có tên hãng hay thương hiệu. Không gọi mô hình, không tốn credit.
 - `references/layout-wireframes.md` (+ ảnh wireframe trong `references/examples/wireframes/` và spec đo được trong `references/examples/desktop_specs/`): wireframe **desktop** (mascot đứng ở một trong hai bên bàn chơi, 5 game bên trái, 3 game bên phải, bảng tính năng ở bên đối diện, board giữa màn hình khoảng 53% bề ngang và 83% chiều cao, dock điều khiển giống nhau ở đáy), bảng số đo 9 game, quy tắc, và bảng chuyển khối từ PC sang điện thoại (mascot thành nửa thân trên phía trên board, bảng tính năng xuống thanh ngang dưới board). Lệnh `mobile_layout.py wireframe` vẽ wireframe từ spec.
 - `mobile_layout.py`, `mobile_capture.mjs` (trong `skills/stake-casino-game-dev/scripts/`) và `references/mobile-ui.md`: hướng dẫn giao diện **điện thoại dọc**. Chụp game ở nhiều cỡ điện thoại và PC (kèm nhật ký tải asset để so sánh), vẽ lưới 10% để đọc toạ độ, kiểm tra bố cục theo quy tắc (board full bề ngang, vùng hero phía trên với mascot đè mép board, bảng tính năng sát dưới board, dải cảnh 11–13% có nút nổi, HUD ghim đáy, dải trống tổng tối đa 26%), và tính bố cục khuyến nghị. Có bảng số đo của 5 game và ví dụ áp dụng cho game Inkblade Ronin. Kết quả quan trọng: game tham chiếu dùng **một bộ asset cho cả PC và điện thoại** (181 file, 32.5 MB, `device=mobile` không đổi danh sách), mọi khác biệt do code sắp xếp theo kích thước cửa sổ; mascot ở điện thoại chỉ lộ nửa thân trên phía trên khung board.
@@ -265,7 +265,8 @@ python3 skills/casino-symbol-art/scripts/svg_to_atlas.py build   art/svg --out p
 - `anim_probe.py` và `references/animation-timing.md`: đo cách một game tham chiếu xử lý animation từ video quay demo công khai (trích khung, bảng khung hình, đọc số thắng bằng OCR, đo chu trình vòng chơi) và ghi lại nhịp, thứ tự, nguyên tắc để áp dụng bằng art của riêng mình, không sao chép style. Kết quả hiện có: một vòng chơi trung vị 1.00 giây (rơi ra, bảng trống, rơi vào từng cột cách nhau khoảng 0.16 giây), highlight thắng nhỏ khoảng 0.65 giây không làm tối symbol khác, luồng vòng thưởng với bảng giới thiệu và bảng TOTAL WIN chờ bấm. Mẫu nhỏ: một game, một phiên.
 - `silhouette_check.py`: tô đen từng symbol ở kích thước thật và so độ trùng khít hình dáng (IoU) từng cặp. Dùng cho kiểu `freeform`: không cặp nào được vượt 0.80. Với huy hiệu tròn hoặc ô vuông thì điểm cao là bình thường vì cùng một đường viền.
 - `style_check.py` (cần `pillow`, `numpy`, `scipy`): đo độ lệch phong cách của từng asset so với bộ gốc (khoảng cách tới bảng màu, độ sáng, độ bão hoà, tỷ lệ màu ấm, độ sáng viền, hướng sáng), so trong từng nhóm (symbol với symbol, nền với nền). WARN là cần xem lại, FAIL là sinh lại. Đã kiểm tra trên bản lệch cố ý: đổi tông màu bị FAIL, lật hướng sáng và tăng bão hoà bị WARN. Không thấy được hình dáng hay nét vẽ, nên vẫn phải xem contact sheet bằng mắt. Cách dùng và quy trình giữ nhất quán: `references/style-valkyrie-hacksaw.md` §7.
-- `build_symbol_set.py`: cắt các bảng symbol do mô hình sinh (chữ bài, premium, đặc biệt), vẽ huy hiệu "x5" của Wild và nhãn "SCATTER" bằng code, xuất từng symbol PNG, ảnh tổng hợp và ảnh kiểm tra đọc được ở 96 px (màu và thang xám).
+- `slice_symbols.py`: cắt ba bảng symbol do mô hình sinh (`symbols_premium`, `symbols_ranks`, `symbols_special`) thành từng PNG vuông 512 px (`prem_1..8`, `rank_A/K/Q/J/10`, `wild`, `scatter`, `bonus`) cùng `manifest.json`, vẽ huy hiệu "x5" của Wild và nhãn "SCATTER" bằng code, và xuất ảnh kiểm tra đọc được ở 96 px (hàng màu và hàng thang xám). Báo lỗi và dừng nếu một bảng không cắt ra đủ số symbol.
+- `fx_sprites.py`: sinh bằng code ba sprite dùng chung cho công thức `win` (`flash_disc`, `glow_ring`, `glint`) vào `art/fx/`, tô màu theo màu ấm của bộ; dùng blend mode `add` trong Pixi. Harness cũng chép `symbol_fx.json` thành `art/motion.json` để chỉnh theo từng game.
 - `raster_cutout.py`: tách nền cho ảnh raster (màu key hoặc tự dò từ 4 góc, flood-fill từ viền nên màu giống nền nằm bên trong symbol vẫn giữ), làm mềm và khử viền, cắt và căn giữa vào ô vuông. Ví dụ: `python3 skills/casino-symbol-art/scripts/raster_cutout.py art/raw art/svg --cell 512 --key "#ff00ff"`.
 
 **Chọn hướng nào:**
@@ -298,10 +299,10 @@ Mỗi bước nhận đầu ra của bước trước và có một cổng kiể
 |---|---|---|---|---|
 | 1. Ý tưởng | `stake-casino-game-dev` (§7) | ý tưởng hoặc brief | tài liệu thiết kế: tầng cơ chế, bậc thang mode, danh sách event, chủ đề, lưới, RTP/wincap | qua kiểm tra luật (§2); mode đã chốt vì không thêm được sau duyệt |
 | 2. Toán học | `stake-casino-game-dev` (Phase 2) | tài liệu thiết kế | game_config, books, lookup table, `winLevel` | `validate_math.py` sạch |
-| 3. Art | `casino-symbol-art` | chủ đề, danh sách mode, kích thước symbol thật | `art/style.json` (có `style_lock`), `art/motion.json` (công thức animation), `art/fx/` (đĩa loé, vòng sáng, glint, bản "lit" của premium), atlas symbol, khung, nền guồng, nền, art win và chuyển cảnh | `style_check.py` không FAIL; test thu nhỏ và thang xám; art gốc |
+| 3. Art | `casino-symbol-art` (chuỗi: `art_harness.py` → gọi mô hình tạo ảnh → `slice_symbols.py` → `fx_sprites.py` → `compose_screen.py`) | chủ đề, danh sách mode, kích thước symbol thật | `art/style.json` (có `style_lock`), `art/motion.json` (công thức animation), `art/fx/` (đĩa loé, vòng sáng, glint, bản "lit" của premium), atlas symbol, khung, nền guồng, nền, art win và chuyển cảnh | `style_check.py` không FAIL; test thu nhỏ và thang xám (`_readability.png`); xem `preview_pc.png` và `preview_phone.png`; art gốc |
 | 4. Frontend | `stake-casino-game-dev` (Phase 3, §8.5) | books, atlas, `art/motion.json`, danh sách event | bản build tĩnh nối RGS, HUD, win celebration, đa ngôn ngữ; vòng chơi theo quy tắc nhịp §8.5 (xoá bảng, nhịp trống, từng cột rơi vào, highlight thắng, HUD cập nhật sau) | `check_static_build.py` sạch; mọi loại event đều có handler |
 | 5. Âm thanh | `casino-audio-design` | danh sách event, bảng cấp win | file âm thanh + AudioManager | bảng event → âm thanh đầy đủ |
-| 6. Kiểm thử tích hợp | `stake-casino-game-dev` (Phase 4) | bản build | kết quả test tiền tệ, mode, kích thước | 10 lần thắng mỗi mode khớp RGS |
+| 6. Kiểm thử tích hợp | `stake-casino-game-dev` (Phase 4) | bản build | kết quả test tiền tệ, mode, kích thước | 10 lần thắng mỗi mode khớp RGS; bố cục điện thoại qua `mobile_layout.py report` (§13.4) |
 | 7. Audit | `casino-game-audit` | build hoặc ảnh chụp | báo cáo chấm điểm | không còn lỗi chặn; mảng Graphics & art direction ≥ 4 |
 | 8. Nộp duyệt | `stake-casino-game-dev` (Phase 5) | bản build đã audit | event ID replay, tile, hồ sơ nộp | checklist Stake đủ ✅ |
 
@@ -325,20 +326,27 @@ Tóm tắt từ tài liệu chính thức (https://stakeengine.github.io/docs/) 
 ```
 skills/
 ├── stake-casino-game-dev/
-│   ├── SKILL.md                 quy trình 13 mục: ý tưởng, toán, frontend, win celebration, đa ngôn ngữ, PixiJS 8.22, Bet UI
-│   ├── scripts/                 validate_math.py, check_social_terms.py, check_static_build.py
+│   ├── SKILL.md                 quy trình 13 mục (ý tưởng, toán, frontend, win celebration, đa ngôn ngữ, PixiJS 8.22, Bet UI); mục 7, 8.3–8.5, 12, 13 có phần chi tiết trong references/
+│   ├── scripts/                 validate_math.py, check_social_terms.py, check_static_build.py,
+│   │                            mobile_layout.py, mobile_capture.mjs
 │   ├── assets/                  rgs-client.ts, book-player.ts
 │   └── references/
+│       ├── concept-design.md    §7: ý tưởng, thang mode, đòn bẩy gắn kết, mẫu concept doc
+│       ├── win-presentation.md  §8.3–8.5: màn win celebration, quy tắc hành vi, nhịp vòng chơi
+│       ├── pixi-slots.md        §12: PixiJS 8 cho slot Stake (kiến trúc, hiệu năng, ràng buộc)
+│       ├── bet-ui-hud.md        §13: thiết kế Bet UI / HUD, số đo, biến thể responsive
+│       ├── mobile-ui.md, layout-wireframes.md   bố cục điện thoại và desktop, spec đo được, wireframe
 │       ├── stake-engine/        overview, math-requirements, math-sdk, rgs-api, frontend-requirements, approval-checklist
 │       ├── pixijs/vendor/       26 skill PixiJS chính thức (đổi SKILL.md thành GUIDE.md)
 │       ├── threejs/             casino-3d.md + vendor/ (13 hướng dẫn Three.js)
 │       └── gamedev/vendor/      11 hướng dẫn game dev (game-feel, audio, UI/UX, hiệu năng, shader…)
 ├── casino-game-audit/SKILL.md
 ├── casino-audio-design/SKILL.md
+├── (gốc repo) scripts/check_repo.py   kiểm tra nhất quán của repo (frontmatter, đường dẫn, cú pháp, mục §, cây README)
 └── casino-symbol-art/
     ├── SKILL.md
     ├── scripts/                 svg_to_atlas.py (lint, preview, layers, build), raster_cutout.py,
-    │                            compose_layered_screen.py, build_symbol_set.py, style_check.py,
+    │                            compose_screen.py, slice_symbols.py, fx_sprites.py, artlib.py, style_check.py,
     │                            art_harness.py, silhouette_check.py, tile_check.py,
     │                            symbol_fx.json, symbol_fx.mjs, symbol_fx_preview.py, anim_probe.py
     └── references/

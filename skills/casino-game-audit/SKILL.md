@@ -1,6 +1,6 @@
 ---
 name: "casino-game-audit"
-description: "Audit a casino/slot game build for visual quality: graphics, render quality, effects, mode transitions, bet UI, spacing and typography, Stake-compliant win celebrations, audio and localization. Produces a scored report with prioritized fixes."
+description: "Audit a casino/slot game build for visual quality: art consistency, render quality, effects and timing, mode transitions, bet UI, phone and desktop composition, spacing and typography, Stake-compliant win celebrations, audio and localization. Produces a scored report with prioritized fixes."
 ---
 
 # Casino game quality audit

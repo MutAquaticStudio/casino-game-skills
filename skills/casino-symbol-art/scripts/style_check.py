@@ -14,7 +14,7 @@ style.json fields read (all optional except palette):
   "light":        "top-left"                 expected light direction
   "style_check":  {"groups": {"symbol": ["sym_*", "rank_*"], "background": ["backdrop*", "board*"]},
                    "tolerances": {"palette_de": 28, "lightness": 12, "chroma": 14, "warm_share": 0.25, "outline_l": 14},
-                   "exempt": {"rank_K.png": ["palette"]}}
+                   "exempt": {"rank_*": ["palette", "warm"]}}   (glob patterns; metric names: palette, lightness, chroma, warm, outline, light)
 
 Groups: a board is darker than a symbol by design, so lightness, chroma, warm share and outline
 are compared only inside a group (glob patterns in style_check.groups; assets matching no group
@@ -105,6 +105,7 @@ def main():
     tol = dict(palette_de=28, lightness=12, chroma=14, warm_share=0.25, outline_l=14)
     tol.update(st.get('style_check', {}).get('tolerances', {}))
     exempt = st.get('style_check', {}).get('exempt', {})
+    args.assets = [p for p in args.assets if not os.path.basename(p).startswith('_')]   # skip _readability.png and other helper images
     feats = {p: features(p, pal_lab) for p in args.assets}
     feats = {p: f for p, f in feats.items() if f}
     groups_cfg = st.get('style_check', {}).get('groups', {})
@@ -129,7 +130,8 @@ def main():
     set_bias_sign = np.sign(np.median(all_bias)) if all_bias else 0
     rows, fails = [], 0
     for p, f in feats.items():
-        name = os.path.basename(p); ex = exempt.get(name, []); res = {}
+        name = os.path.basename(p); res = {}
+        ex = [m for pat, ms in exempt.items() if fnmatch.fnmatch(name, pat) for m in ms]
         g = group_of(p); med = gmed[g]
         def judge(metric, val, ref, tolv, absolute=False):
             if metric in ex:

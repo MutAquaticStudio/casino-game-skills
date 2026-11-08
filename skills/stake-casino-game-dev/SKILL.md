@@ -1,6 +1,6 @@
 ---
 name: "stake-casino-game-dev"
-description: "Ideate, build, balance, review and submit casino/slot games for Stake Engine: deep multi-mode gameplay, Stake-compliant win celebrations, localization, Math SDK, RGS API, PixiJS 8 (latest) and Three.js frontends, approval checklist."
+description: "Ideate, build, balance, review and submit casino/slot games for Stake Engine: concept and mode ladder, Math SDK, RGS API, PixiJS 8 and Three.js frontends, Bet UI with measured phone and desktop layouts, win celebrations and round timing rules, localization, approval checklist. Use for any Stake Engine slot task, from idea to submission."
 ---
 
 # Casino game development for Stake Engine
@@ -48,10 +48,10 @@ Consequences:
 ### Workflow map (what each step hands to the next)
 | Step | Skill | Needs | Produces | Gate before moving on |
 |---|---|---|---|---|
-| 1 Concept | this skill, §7 | idea or brief | concept doc: depth stack, mode ladder, event list, theme, grid, target RTP/wincap | §2 screen passed; mode ladder final (no modes can be added after approval) |
+| 1 Concept | this skill, §7 (`references/concept-design.md`) | idea or brief | concept doc: depth stack, mode ladder, event list, theme, grid, target RTP/wincap | §2 screen passed; mode ladder final (no modes can be added after approval) |
 | 2 Math | this skill, Phase 2 | concept doc | game_config.py, books, lookup tables, `winLevel` per outcome | `validate_math.py` clean |
 | 3 Art | `casino-symbol-art` | concept theme + mode list + real symbol size | `art/style.json` (with `style_lock`), symbol atlas, frame, board, backdrop, win/transition art | `style_check.py` no FAIL; shrink and greyscale tests; `silhouette_check.py` for frameless symbols; `tile_check.py` on the tile; originality |
-| 4 Frontend | this skill, Phase 3, §12–13 | books, atlas, event list | static build wired to RGS, HUD, win celebration, locales | check_static_build.py clean; every book event type has a handler |
+| 4 Frontend | this skill, Phase 3, §12–13 (`references/pixi-slots.md`, `references/bet-ui-hud.md`) | books, atlas, `art/motion.json` + `art/fx/`, event list | static build wired to RGS, HUD, win celebration, locales | check_static_build.py clean; every book event type has a handler |
 | 5 Audio | `casino-audio-design` | event list, tier table | audio files + AudioManager | event → sound table complete |
 | 6 Integration | this skill, Phase 4 | build | test results across currencies, modes, sizes | 10 wins per mode match RGS payout; phone layouts pass `mobile_layout.py report` (§13.4) |
 | 7 Audit | `casino-game-audit` | build or screenshots | scored report | no blockers; Graphics & art direction (area A) ≥ 4 |
@@ -356,120 +356,19 @@ design.
 For deeper Three.js API help (materials, loaders, shaders, postprocessing, performance), the
 `CloudAI-X/threejs-skills` repo is a good companion skill set.
 
+## 6. Useful links
+Docs https://stakeengine.github.io/docs/ (Approval, API, Math SDK, Web SDK, Reference) ·
+Math SDK `github.com/StakeEngine/math-sdk` · Web SDK `github.com/StakeEngine/web-sdk` ·
+ts-client `github.com/StakeEngine/ts-client` · optimiser `github.com/StakeEngine/convex-optimizer` ·
+docs + MCP server `github.com/StakeEngine/docs`.
+
 ## 7. Concept design: depth, many modes, engagement
 
-The goal is a game players want to come back to because it is *rich*, not because it pressures
-them. On Stake Engine every round is independent, so nothing can persist between rounds (no XP,
-collections, saved meters, missions, streak rewards). Depth and retention therefore have to be
-built from five things: a layered mechanic, a varied mode set, tension inside each round,
-strong identity (art, audio, fantasy), and moments worth sharing (replay links).
+Depth and retention must come from five things, because every round is independent (no XP, collections, saved meters, missions or streaks):
+a layered mechanic, a varied mode set, tension inside each round, strong identity (art, audio, fantasy) and moments worth sharing (replay links).
+The whole mode ladder is designed up front: no mode can be added after approval.
 
-### 7.1 Shallow vs deep
-A concept is **shallow** if a round is a single evaluation with one win type and the bonus is
-"same thing, more spins". A concept is **deep** when 3 or more systems interact *inside one
-round*, so that the result of one layer feeds the next and players learn to read the board.
-Build the concept as a **depth stack** and state how each layer amplifies the others:
-
-| Layer | Examples |
-|---|---|
-| 1. Core pay | lines, ways, cluster, scatter-pays, custom (pathways, connected regions) |
-| 2. Board modifiers | tumble/cascade, mystery symbols, transforms, splitting/doubling symbols, walking or expanding wilds, grid expansion (rows unlock on wins), symbol upgrades |
-| 3. Multipliers | spot multipliers that grow on repeat wins in the same cell, global multiplier rising with each cascade, multiplier symbols (state whether they add or multiply) |
-| 4. In-round meter | collect symbols during the round/bonus to unlock upgrades (bigger multipliers, extra rows, sticky wilds) – resets when the round ends, so it is stateless-safe |
-| 5. Bonus escalation | levels inside free spins, retriggers that add spins *and* upgrade, sticky elements that last until the bonus ends, a final "super" phase |
-
-For every concept write: the **interaction chain** (e.g. cascade → raises spot multiplier →
-multiplier also boosts the meter → meter unlocks a row → more ways → more cascades), the
-**common round** feel, the **typical bonus** feel, and the **dream path** to wincap. If you can't
-describe a dream path that uses 3 or more layers, the concept is too shallow – add a layer or
-make two layers interact.
-
-Keep it readable: every layer must be visible on screen (meter UI, multiplier labels on
-cells), explainable in one rules paragraph with an example, and legible in the 400×225 popout.
-As a rule of thumb: at most 3 layers active in the base game and up to 5 in the bonus.
-Complexity costs math effort (more events, more distribution tuning), so scope it accordingly.
-
-### 7.2 Mode ladder (design all modes up front – none can be added after approval)
-Each mode must make a **different promise** to the player, not just change the numbers. A
-typical ladder:
-
-| Mode | Cost | Promise | Notes |
-|---|---|---|---|
-| BASE | 1x | Full mechanic, frequent small wins, bonus about 1 in 150–400 spins | Sets the RTP anchor |
-| BOOST / ANTE | 1.25–2x | Higher bonus chance or a guaranteed special symbol each spin | `is_feature=True`; ≤2x avoids the confirmation dialog |
-| BONUS | ~80–150x | Straight into the standard bonus | `is_buybonus=True`, confirmation needed |
-| SUPER BONUS | ~300–600x | Bonus that starts upgraded (starting multiplier, sticky wilds, meter pre-filled, extra row) | Distinct visuals/music |
-| Alt-volatility (optional) | 1x or more | Same mechanic, sharper or smoother distribution | Only if the experience truly differs |
-
-Constraints: every mode within 0.5% RTP of the others; each has its own wincap, its own
-distributions and its own events; each needs a one-sentence description, cost and max win in
-the rules; 3–5 modes is usually the sweet spot. The price of a buy mode is roughly the expected
-bonus value divided by the target RTP – tune the distributions so the price stays a clean number.
-Player "choices" (e.g. pick volatile vs steady free spins) are best offered as separate modes
-chosen *before* the round: a mid-round choice cannot change a pre-computed outcome, and
-presenting a choice that doesn't matter is misleading.
-
-### 7.3 Engagement levers to use
-- **Rhythm through the math.** Shape the distribution, not just the RTP: a base hit-rate around
-  1 in 3–5; smooth win ranges with no gaps; a bonus frequency that lets a typical session see a
-  bonus. Check this with `P(≥1 bonus in N spins) = 1 − (1 − p)^N`; aim for roughly 40–60% at
-  N = 150 for medium volatility. Include mid-size wins so the experience isn't only dust or jackpot.
-- **Anticipation and tension:** staggered reveals, reel slowdowns and music builds. Trigger them
-  only from real book data (`anticipation`, scatter counts), so the tension is honest.
-- **Escalation inside the round:** meters filling, multipliers climbing, rows unlocking, a final
-  phase – a visible arc of build-up → peak → release in every bonus.
-- **Mastery and readability:** players can always see *why* they won (highlighted positions,
-  chain counters, the multiplier math shown). Rules include worked examples.
-- **Discovery:** rare but real events (special transforms, a unique max-win sequence) that exist
-  in the books, with visual moments that are distinct for each tier.
-- **Mode variety** as the main long-term draw: each mode feels like a different game in the
-  same world.
-- **Identity:** a coherent fantasy, signature symbol animations and an audio motif; the bonus has
-  its own scene.
-- **Shareability:** big-win and wincap screens designed to look great in replay links.
-- **Respect the player's time:** turbo mode, skippable celebrations, fast load.
-
-### 7.4 Responsible-design check (also protects approval)
-Don't design or implement these, and flag them if the user asks:
-- **Losses disguised as wins:** no celebration for payouts smaller than the stake. Show them
-  neutrally. Full celebration screens only from Big Win upward (§8); wins between the stake and
-  Big Win get a position highlight and a HUD roll-up only.
-- **Fabricated near-misses:** the frontend must never invent near-misses that aren't in the book,
-  and the math must not inflate near-miss boards beyond what the mechanic naturally produces.
-- Pressure tactics: countdown timers, "win it back" prompts after losses, nudges to buy a bonus
-  after a dry streak, one-click autoplay, hidden or hard-to-find costs and RTP.
-- Anything appealing to minors, and fake persistence ("you're close to unlocking…") – which is
-  also impossible in a stateless system.
-Retention here should come from quality and variety. Reviewers rate polish and originality, and
-manipulative patterns put both approval and players at risk.
-
-### 7.5 Ideation process
-1. Generate **3 concepts with different depth signatures** (e.g. cascade + spot multipliers;
-   grid expansion + collection meter; walking wilds + transforms), each with a theme that
-   explains the mechanic (the fantasy should make the rules intuitive).
-2. Score each from 1 to 5 on: depth (layer interaction), readability, originality vs existing
-   slots, math feasibility, mobile/popout legibility, art/animation cost, and mode-ladder
-   potential. Recommend one and say why.
-3. Expand the chosen concept into the concept doc below.
-
-### 7.6 Concept doc template
-```
-# <Title> – <fantasy in one line>
-Core loop (1 sentence):
-Grid / pay type:
-Depth stack: layer | mechanic | feeds into
-Interaction chain + dream path to wincap:
-Base round feel / bonus feel / super bonus feel:
-Modes: name | cost | promise | changes vs base | RTP target | wincap | is_feature / is_buybonus
-Round archetypes + target frequency per mode:
-  dead spin, small win (< stake, neutral), win ≥ stake, chain/cascade, bonus trigger, big bonus, wincap
-Math targets: hit-rate, bonus 1-in-X per mode, P(bonus in 150 spins), RTP split base/free, volatility
-Engagement beats: anticipation → escalation → peak → release (per mode)
-Book events needed (standard + custom):
-Rules text outline incl. worked example:
-Responsible-design check (7.4): pass / issues
-Risks + scope (math effort, readability at 400×225, asset count):
-```
+**Full detail in `references/concept-design.md`** (§7.1 shallow vs deep, §7.2 mode ladder, §7.3 engagement levers, §7.4 responsible-design check, §7.5 ideation process, §7.6 concept doc template). Read it before writing the concept doc.
 
 ## 8. Win presentation system (win celebrations)
 
@@ -507,65 +406,7 @@ cost** (amount × mode cost): a 100x buy that returns 120x is a modest result, n
 If you change thresholds, change them in the Math SDK config (`get_win_level`) so books and
 frontend agree.
 
-### 8.3 Screens to design
-| Screen | When | Content |
-|---|---|---|
-| Win highlight | Every `winInfo` | Winning positions/lines/clusters animate, per-win amount label |
-| HUD roll-up | Every win | Win field counts up step by step to the new total |
-| Big-Win-and-above celebration | `winLevel` ≥ 5 | Overlay: tier title, big rolling number, particles/coins, music sting; tiers chain upward (Big → Mega → Epic …) as the number passes thresholds |
-| Feature trigger | `freeSpinTrigger` | "10 FREE SPINS" popup, scatter celebration, then bonus intro (a feature message, not a win celebration) |
-| Bonus intro / transition | Entering the bonus | Scene change, short rules hint, press-to-start or auto-continue |
-| Retrigger banner | `freeSpinRetrigger` | "+5 SPINS" |
-| Meter / upgrade banner | In-round upgrades | "LEVEL 2 – x3 MULTIPLIER" |
-| Bonus summary (total win) | `freeSpinEnd` | Total bonus win, spins played; if the total is ≥ Big Win, chain into the tier celebration; then return transition |
-| Max Win | `wincap` | Unique, longest celebration; the round ends at the cap; "MAX WIN 5,000x" |
-| System modals | Bet/autoplay confirmation, errors | Same visual language, calm and readable |
-
-### 8.4 Behaviour rules
-- Duration scales with tier (~2–3s Big → ~8–12s Max Win); **always skippable** – the first
-  tap/space jumps to the final amount, the second closes. Turbo shortens it but keeps the final
-  amount visible for at least ~1s.
-- The roll-up ends exactly on the RGS payout; never overshoot and correct back.
-- Autoplay: celebrations still play (shortened); Max Win may stop autoplay.
-- Layout works at 400×225 popout and mobile portrait: titles scale, numbers never clip; test
-  long strings (e.g. "¥150,000,000") and every shipped language.
-- Asset plan: tier title art (or one animated title with variants), particle emitters with
-  intensity levels, background dim, a bitmap number font, audio stings per tier (Big Win and
-  above) plus a roll-up loop. The art side (asset list per screen, tier escalation rules, file
-  names, hand-off) is in `casino-symbol-art/references/win-celebration-art.md`; measured round, win-highlight and bonus-flow timing of a reference game
-  is in `casino-symbol-art/references/animation-timing.md` (a whole round near 1 s, a win highlight about 0.65 s with the HUD updating after it).
-
-### 8.5 Round, win-highlight and bonus timing rules (apply these in the round controller)
-Basis: measured on one reference game's public demo (60 spins, 25 fps recording, one session; details and limits in
-`casino-symbol-art/references/animation-timing.md`). They are **structure and timing to reuse with our own art**, never their art. Items marked authored are our
-defaults, not measurements. Re-measure on your own build with `casino-symbol-art/scripts/anim_probe.py cycle`.
-
-Order of one round inside the book-event player (each step awaited, none skipped):
-1. **Clear**: symbols leave the board (about 0.3 s). Then an **empty beat** (about 0.25 s). A visible reset, not dead time.
-2. **Enter**: columns drop in left to right, about **0.16 s apart**, 0.25 to 0.45 s per column; each symbol plays `land` (authored, 150 to 300 ms).
-3. **Specials announce on arrival**: a Wild or Scatter that lands gets its own flash and ring (about 0.8 s), not only when it pays.
-4. **Win highlight**: each winning symbol plays `win`, one shot of about **0.65 s** (emissive flash, glow ring, glint, fade). Dimming the others is a design choice (one reference game did not dim, another dimmed non-winners while winners glowed); keep the winners clearly brighter either way.
-   Show the **win amount on the winning group** for the same duration; update the **HUD WIN field after** the highlight (about 0.85 s after it started).
-   Several wins or cascades: play the highlights in sequence, never overlapping.
-5. Only when `winLevel` is Big or above (§8.1): the tier celebration of §8.3, after the highlight and before the next round.
-
-| Rule | Value | Basis |
-|---|---|---|
-| Whole round, clear to settled | about 1.0 s; investigate above 1.4 s | measured |
-| Empty beat between clear and enter | about 0.25 s | measured |
-| Column stagger | about 0.16 s | measured (read from frames) |
-| Small-win highlight | about 0.65 s, one shot | measured (in the game that did not dim) |
-| HUD update after the highlight | about 0.85 s after its start | measured |
-| Special symbol arrival flash | about 0.8 s | measured on one symbol |
-| `land` squash and stretch | 150 to 300 ms | authored |
-| Turbo | scale every duration by about 0.5, keep the order, keep the final amount readable | authored |
-| Resting symbols | static; add an idle loop only if the design asks for it | measured (none seen) |
-
-Bonus flow: an **intro plate** with the rule in a few words that **waits for the player**; then the **same round cycle** as the base game (do not invent a second rhythm);
-a **summary plate** (TOTAL WIN) that waits for the player and is also the feature summary of §8.3; transitions use **one physical metaphor of the game's theme**, applied
-consistently (open and close the same way every time). A mid-size bonus total with no Big-Win level needs the summary plate only.
-Not measured, so do not assume numbers for them: big-win tier screens, scatter anticipation, retrigger banners, skip behaviour, audio.
-Rolling-reel games have no clear and enter phases; keep the stagger and the one-second target, and judge the rest by feel.
+Screens (§8.3), behaviour rules (§8.4) and the round, win-highlight and bonus timing rules (§8.5) are in **`references/win-presentation.md`**; read it when designing the celebration screens or writing the round controller.
 
 ## 9. Localization (multi-language versions)
 
@@ -605,12 +446,6 @@ Workflow:
 - `casino-symbol-art` – style guide, layered SVG symbols, readability checks at real reel size,
   Pixi atlas export and Spine layer hand-off, plus win-title, reel-frame and background art.
 
-## 6. Useful links
-Docs https://stakeengine.github.io/docs/ (Approval, API, Math SDK, Web SDK, Reference) ·
-Math SDK `github.com/StakeEngine/math-sdk` · Web SDK `github.com/StakeEngine/web-sdk` ·
-ts-client `github.com/StakeEngine/ts-client` · optimiser `github.com/StakeEngine/convex-optimizer` ·
-docs + MCP server `github.com/StakeEngine/docs`.
-
 ## 11. Bundled resources (when installed from the repo)
 Full package: https://github.com/MutAquaticStudio/casino-game-skills. If these folders sit next
 to this file, prefer them over the inline snippets; if they don't, use the inline versions above
@@ -619,6 +454,7 @@ to this file, prefer them over the inline snippets; if they don't, use the inlin
 - `scripts/check_social_terms.py <dir>` – stake.us restricted-wording scan
 - `scripts/check_static_build.py <dist>` – external requests, hardcoded RGS, absolute paths, console logs
 - `assets/rgs-client.ts`, `assets/book-player.ts` – typed RGS client, money helpers, round controller (live/resume/replay)
+- `references/concept-design.md` (§7), `references/win-presentation.md` (§8.3–8.5), `references/pixi-slots.md` (§12), `references/bet-ui-hud.md` (§13), `references/mobile-ui.md` and `references/layout-wireframes.md` (phone and desktop layouts, with `scripts/mobile_layout.py` and `scripts/mobile_capture.mjs`)
 - `references/stake-engine/*.md` – detailed notes per topic (overview, math SDK, math requirements, RGS API, frontend requirements, approval checklist)
 - `references/pixijs/vendor/` – the official PixiJS v8 agent skills (26 topics, MIT), see §12
 - `references/threejs/casino-3d.md` + `references/threejs/vendor/` (CloudAI-X Three.js guides, MIT)
@@ -626,246 +462,13 @@ to this file, prefer them over the inline snippets; if they don't, use the inlin
 
 ## 12. PixiJS for Stake slots (v8, latest checked: 8.22.0 – Nov 2026)
 
-PixiJS is the most common Stake Engine renderer. Check the current version with
-`npm view pixi.js version` before starting; everything below is v8 API.
+PixiJS is the most common Stake renderer. Check the version with `npm view pixi.js version`; everything is v8 API (`await app.init`, `app.canvas`, `Assets`, `Graphics` shape-then-fill, `Container` for children).
+Rules that matter most for approval: the static build must not reach external URLs (no CDN, relative asset paths, Vite `base: './'`); every visual and amount must match the book (final amounts = RGS payout, §8); run `scripts/check_static_build.py dist` after building.
 
-### 12.1 Versions and where the API docs are
-- **pixi.js 8.22.0** (latest stable, Oct 2026). Stake's Web SDK pins **8.8.1** with
-  `@esotericsoftware/spine-pixi-v8` 4.2.x and `pixi-filters` 6.x. New projects: use the latest
-  8.x. Web SDK projects: upgrade only after testing animations, text and filters (several
-  releases since 8.8 changed behaviour, see 12.6).
-- Current ecosystem: `@esotericsoftware/spine-pixi-v8` 4.3.x, `pixi-filters` 6.1.x,
-  `@pixi/sound` 6.x, `@pixi/layout` 3.x, `gsap` 3.15.x.
-- **Official agent skills ship inside the npm package** since 8.19: after `npm i pixi.js`, read
-  `node_modules/pixi.js/skills/pixijs/SKILL.md` (router) and the topic skill you need
-  (`pixijs-application`, `-assets`, `-scene-sprite`, `-scene-text`, `-scene-particle-container`,
-  `-filters`, `-performance`, `-events`, `-ticker`, `-accessibility`, `-migration-v8`…). The repo
-  version of this skill vendors them in `references/pixijs/vendor/`. For anything not covered,
-  the always-current API index is `https://pixijs.download/release/docs/llms.txt` (dev-time
-  reading only – the game build must not fetch anything external).
-- Prefer these sources over memory: v7 patterns (`beginFill`, `@pixi/*` imports, `app.view`,
-  `BaseTexture`, constructor options) are wrong in v8.
-
-### 12.2 v8 essentials (the mistakes agents make most)
-```ts
-import { Application, Assets, Container, Sprite, BitmapText } from 'pixi.js';
-
-const app = new Application();
-await app.init({                      // async init – never pass options to the constructor
-  resizeTo: hostEl,                   // the game container, not window (popout/mini-player)
-  background: '#000000',
-  antialias: true,
-  autoDensity: true,
-  resolution: Math.min(window.devicePixelRatio, 2),
-  preference: 'webgl',                // WebGL is the safest default on mobile; WebGPU opt-in
-});
-hostEl.appendChild(app.canvas);       // app.canvas, not app.view
-```
-- One import root: `import { … } from 'pixi.js'`. Graphics: `new Graphics().rect(…).fill(…)`.
-- Load with `Assets`, never `Texture.from(url)`. Use a manifest with bundles and relative paths:
-  ```ts
-  await Assets.init({ basePath: './assets', manifest: {
-    bundles: [
-      { name: 'boot',  assets: [{ alias: 'logo', src: 'logo.webp' }, { alias: 'ui-font', src: 'fonts/ui.woff2' }] },
-      { name: 'base',  assets: [{ alias: 'symbols', src: 'symbols.json' }, { alias: 'win-digits', src: 'fonts/digits.fnt' }] },
-      { name: 'bonus', assets: [{ alias: 'bonus-bg', src: 'bonus/bg.webp' }] },
-    ] } });
-  await Assets.loadBundle('boot', p => loader.set(p));   // progress 0..1 for the loading screen
-  await Assets.loadBundle('base');
-  Assets.backgroundLoadBundle('bonus');                  // prefetch while the player spins
-  ```
-- Texture atlases (TexturePacker/free-tex-packer JSON) for symbols and UI; `.webp`/`.avif`
-  with `.png` fallback; KTX2/Basis only if you bundle the transcoder locally.
-- Text: `BitmapText` (or an MSDF font) for everything that changes often – win counters,
-  balance, bet value, spin counters. `Text` for static labels (re-rendering `Text` every frame is
-  slow). `SplitText`/`SplitBitmapText` for per-letter tier-title animations. Fonts are bundled
-  files loaded via `Assets` (no font CDN); for localization install a font per script.
-- Containers with `isRenderGroup: true` for big layers that move as a whole (background, reel
-  area, HUD) – the GPU handles their transforms. `cacheAsTexture(true)` for static, complex
-  sub-trees (frames, paytable pages); call `cacheAsTexture(false)` before destroying.
-- `ParticleContainer` + `Particle` (v8 API: `addParticle`, `particleChildren`) for coin showers
-  and sparkles – thousands of particles in one draw call. It now inherits tint/alpha/blend
-  from ancestor render groups (8.19–8.20).
-- Culling is opt-in: `extensions.add(CullerPlugin)` + `container.cullable = true` for
-  off-screen symbol strips.
-- Filters (glow, blur, displacement, `pixi-filters`) are expensive on mobile: apply them to
-  small containers, briefly (win moments), and set `filterArea`/`padding` tightly.
-
-### 12.3 Slot architecture in Pixi
-(Round sequence and timing: §8.5. Symbol motion recipes as data: `casino-symbol-art/scripts/symbol_fx.json` with the evaluator `symbol_fx.mjs`.)
-```
-stage
-├─ bgLayer        (isRenderGroup)   background, parallax, ambient particles
-├─ boardLayer     (isRenderGroup)   reel frame + mask + reels
-│   └─ Reel[]     Container with a vertical strip of SymbolView (visible rows + 1–2 padding rows)
-├─ fxLayer                          win lines/cluster outlines, ParticleContainer coin showers
-├─ celebrationLayer                 Big Win+ overlays, feature popups, bonus summary (§8)
-└─ hudLayer       (or HTML/Svelte overlay)  spin, bet, balance, win, menu
-```
-- **Reels:** each reel scrolls a strip of pooled `SymbolView`s (Sprite or Spine) inside a
-  mask (`Graphics` rect or a sprite mask). Spin = accelerate → constant speed (swap the texture
-  of symbols leaving the top, slight vertical stretch/blur while fast) → land on
-  `reveal.board[reel]` + `paddingPositions` → overshoot-and-settle (back.out ease). Stop reels
-  staggered 120–200 ms, slow down later reels when the book's `anticipation[reel] > 0`. Never
-  let random filler decide anything – the final board always comes from the book.
-- **Symbols:** one `SymbolView` class with states `idle | spin | land | win | dim` driven by
-  Spine animations (`Spine.from({ skeleton: 'h1-data', atlas: 'h1-atlas' })`,
-  `state.setAnimation(0, 'win', false)`) or spritesheet `AnimatedSprite`s. Pool them; don't create
-  or destroy during spins.
-- **Tumble/cascade:** remove winners (pop animation), drop survivors with gravity easing, spawn
-  new symbols from above per `tumbleBoard` – await each step before the next book event.
-- **Win presentation:** highlight `winInfo.positions` (dim the others, play `win`), draw lines
-  with `Graphics` or a glowing sprite trail, roll the HUD counter with `BitmapText`; Big Win and
-  above open the celebration layer (§8) – skippable, with tiers chaining from `winLevel`.
-- **Timing:** drive sequences with GSAP timelines (GSAP animates Pixi properties directly) or
-  `app.ticker` with `ticker.deltaMS`; turbo = `timeline.timeScale(n)`. Await each handler in the
-  book player so live, resume and replay behave identically.
-- **Layout:** compute a design-space layout (e.g. 1920×1080 landscape, 1080×1920 portrait) and
-  scale/letterbox the stage to the host size on resize; switch layouts by aspect ratio or
-  `device=mobile`. Test 400×225 popout: board fully visible, HUD still tappable or simplified.
-  `@pixi/layout` (Yoga flexbox) can help for HUD panels.
-- **HUD choice:** Pixi HUD (consistent look, Web SDK `components-ui-pixi`) or HTML/Svelte overlay
-  (crisp text, easier accessibility and social-mode relabeling). Either way: spacebar spins,
-  ignore key repeat and focused dialogs.
-- **Svelte:** the Web SDK's `pixi-svelte` lets Svelte components declare Pixi objects; outside the
-  SDK, create the Application in `onMount`, destroy it in the cleanup
-  (`app.destroy({ removeView: true, releaseGlobalResources: true }, { children: true })` – the
-  global release avoids stale textures when the app is re-created in the same tab).
-
-### 12.4 Performance budget (mid-range phone, 60 fps)
-- < ~50–100 draw calls in the heaviest scene; check with the PixiJS DevTools browser extension
-  or `renderer` stats; keep sprites from the same atlas adjacent so they batch (filters, masks,
-  `Text` and blend-mode changes break batches).
-- Texture memory: atlases ≤ 2048–4096 px; total GPU textures ideally < ~150 MB; unload the
-  bonus bundle (`Assets.unloadBundle('bonus')`) when it won't be needed soon.
-- Warm-up: render every symbol state, filters and celebration assets once off-screen during
-  loading (or `renderer.prepare.upload(container)`) so the first win doesn't hitch.
-- Pause rendering when the tab is hidden (`app.ticker.stop()` / `start()` on `visibilitychange`)
-  and render on demand when idle.
-- Handle WebGL context loss: on restore, Pixi recreates textures (Text/HTMLText regeneration
-  was fixed in 8.21) – test it on mobile.
-
-### 12.5 Stake constraints applied to Pixi
-- The static build must not reach external URLs: no CDN `pixi.js` script, no font CDNs, assets
-  under relative paths (`basePath: './assets'`, Vite `base: './'`).
-- `Assets` default loaders are fine; don't use parsers that fetch remote resources.
-- Every visual must match the book; final amounts = RGS payout (§8).
-- Run `scripts/check_static_build.py dist` after building.
-
-### 12.6 Recent v8 changes that can bite (8.19 → 8.22)
-- **8.22:** pressing Tab activates the accessibility layer by default again
-  (`accessibilityOptions.activateOnTab`). Test keyboard play: spacebar must still spin and focus
-  must not get stuck on hidden accessible buttons; opt out with `activateOnTab: false` if needed.
-  New `contextmenu` events on containers; WebGPU `transient` MSAA option.
-- **8.21:** `Matrix.decompose()`, `setFromMatrix()`, `reparentChild()` and `replaceChild()`
-  now return a real rotation, zero skew and negative `scale.x` for mirrored objects – re-check
-  tweens that read these values (e.g. flipped symbols). TypeScript 6/7: use `@types/web` instead
-  of `@webgpu/types`. `TexturePool` positional args deprecated.
-- **8.20:** `ParticleContainer` inherits tint and alpha from ancestor render groups – remove
-  manual compensation. WebGPU render bundles and `flipY` render option.
-- **8.19:** `updateTransform({ scaleX: 0 })` now really applies zero scale; `ParticleContainer`
-  respects inherited blend modes; `FillPattern` tiles in global space by default;
-  HTML-in-canvas via `pixi.js/html-source`; official agent skills shipped in the package.
-- **8.17:** `BlurFilter` uses a halving-strength scheme (visual change); Text/BitmapText/
-  HTMLText alignment made consistent – re-check text layouts after upgrading.
-- **8.16:** tagged text (inline styles in one `Text`) and an experimental Canvas renderer
-  fallback.
+**Full detail in `references/pixi-slots.md`**: §12.1 versions and doc locations, §12.2 v8 essentials (the mistakes agents make most), §12.3 slot architecture (layer tree, reel/symbol views, round controller), §12.4 performance budget, §12.5 Stake constraints applied to Pixi, §12.6 recent v8 changes. Official API topics: `references/pixijs/vendor/`. Read it before writing any Pixi code.
 
 ## 13. Bet UI / HUD design
 
-Learned from a reference set of live slots from four different studios (Nov 2026). Use the
-patterns, not the look: build an original skin – copying another studio's UI risks rejection.
+Use the patterns of live studio slots, not their look. The common thread is **simplicity first**: a handful of flat controls, one dominant spin button, no ornate frames; the theme lives in the board, symbols, background and effects, not in the HUD (§13.0 is a guideline from samples, not a Stake rule).
 
-### 13.0 Simplicity first (the common thread in all four references)
-All four studios ship a **very plain** Bet UI: a handful of flat controls, one dominant spin
-button, no ornate frames. The theme lives in the board, symbols, background and effects – not
-in the HUD. This is a design guideline from the samples, not a Stake rule, but treat it as the
-default; every extra element has to earn its place.
-- **Control budget:** about 5–8 persistent elements on screen (spin, bet, balance, win,
-  autoplay, menu, plus at most one of turbo / mode button). Everything else (sound, info, paytable,
-  settings, history, turbo on small screens) goes inside the menu.
-- **One hero:** spin is the only large, high-contrast element; nothing else competes with it.
-- **Values are plain text:** balance, win and bet are a label + number on a flat translucent
-  panel or a scrim – no gem/metal/wood frames around numbers, no per-value ornaments.
-- **Flat, consistent shapes:** one corner radius, one icon style (filled or outline, not both),
-  one accent colour for spin and one for the feature/mode button.
-- **Quiet at idle:** no looping decorative animation, glow or particles on the HUD while the
-  player isn't interacting; motion is reserved for state changes (spin, win roll-up, mode switch).
-- **Skin lightly:** tint the panel colour, accent and icon glyphs to the theme; keep standard
-  positions and shapes. If a themed HUD makes the player hunt for spin or bet, it is over-designed.
-- **Progressive disclosure:** pickers (bet levels, autoplay setup, mode list) open on demand;
-  don't permanently show options the player uses once per session.
-- Test: cover the board – can a new player still name each control within two seconds?
-
-### 13.1 Three proven layout archetypes
-| Archetype | Layout | Strengths | Watch out for |
-|---|---|---|---|
-| **A. Bottom dock** (segmented bar) | One dark translucent dock, bottom-centre: `[turbo/mode] [≡ · BALANCE · WIN] [BET ▲▼] [autoplay] (SPIN) [feature/buy]` | Most readable, scales best to popout, players know it | Generic – skin it with a light touch of the game's materials |
-| **B. Floating cluster** | Bottom-left: menu, sound, info + balance/bet printed on the art; centre: hint/win line; bottom-right: `−  (SPIN)  +` with an autoplay pill under the spin | Immersive, more art visible | Legibility over art – needs a scrim/gradient behind text |
-| **C. Side rails** | Vertical icon columns left/right, big spin at right-middle, bet/balance as a thin text strip on the bottom edge | Best thumb reach in landscape mobile, maximum board space | Tiny values and outline icons get lost on busy art; needs a separate portrait layout |
-
-Default for Stake games: **A** for desktop/popout (safest for approval and the 400×225 popout),
-**B** when the art is calm, **C** only as the mobile-landscape variant.
-
-### 13.2 Anatomy and measurements (16:9 landscape, H = viewport height)
-- **Order, left → right:** settings/navigation → balance → win → bet → spin → modes/feature.
-  Bet sits next to spin (adjust, then spin); balance is farthest away.
-- **Dock:** height ≈ 9–12% H, bottom margin ≈ 2–3% H, width ≤ ~70% W, centred; it must not
-  cover the board's bottom row. Panels black at 70–85% opacity, radius 6–10 px, gaps 4–8 px
-  between cells.
-- **Spin button:** diameter ≈ 1.3–1.6× dock height (≈ 14–17% H), overlapping the dock's top
-  edge; the single most prominent element (ring + circular-arrow icon is the convention);
-  shows a clear spinning/disabled state and can become a stop/skip button.
-- **Secondary buttons** (turbo, autoplay, menu, sound): ≈ 0.5–0.65× the spin diameter,
-  icon-only (explained in the UI guide), hit areas ≥ 44 CSS px even if the icon is smaller.
-- **Label/value pairs:** label uppercase ≈ 1.6–2% H, value ≈ 2.6–3.2% H (≈ 1.5× the label),
-  bold sans, **tabular digits**, currency formatted per currency (JPY 0 decimals, GC/SC without `$`).
-- **Bet cell:** its own panel, slightly brighter than the rest; ▲▼ stepper (or −/+ flanking the
-  spin); tapping the value opens a picker grid with **every** RGS bet level incl. min/max.
-- **Win cell:** reserve its space even at 0 (no layout jump); the roll-up happens here; Big Win
-  and above escalate to the celebration layer (§8).
-
-### 13.3 Mode and feature controls
-- **Ante/boost toggle** (panel beside the board): state price and benefit explicitly
-  ("Play 1.25× – double chance of free spins") with a clear ON/OFF switch. If the mode costs
-  **more than 2×**, switching needs a confirmation dialog – not a one-tap toggle (Stake rule).
-- **Mode / bonus-buy button:** a distinct accent-colour circle at the dock end showing the
-  current mode name; opens a sheet listing every mode with cost, promise, RTP and max win,
-  then a confirm step.
-- **Turbo:** lightning icon with an obvious on/off state (filled vs outline).
-- **Autoplay:** icon next to the spin opens a panel (number of spins, optional stop
-  conditions) with a confirm button – it never starts on the first tap. Do **not** implement
-  "hold space / hold spin for continuous spins": it places consecutive bets without
-  confirmation. Space = one spin.
-- **Feature hint banner** (e.g. "4 scatters award free spins") is fine; keep it short, localized
-  and social-safe.
-- Don't put operator widgets (lobby button, tournaments, promos) inside the game – the platform
-  wraps the game itself.
-
-### 13.4 Responsive variants
-- **Desktop / laptop** (nine games measured, wireframes and table in `references/layout-wireframes.md`): board frame centred (about 53% of the width, 83% of the height, it may run under the dock);
-  the **mascot stands on one outer side** (about 20% of the width, full body; 5 of 9 on the left, 3 on the right) with the feature meter or panel on the opposite side; logo above the mascot or centred on the
-  frame top; one HUD dock at 83 to 96% of the height (menu, balance, win, bet with arrows, autoplay, spin about 12% of the height, emblem at the right end), turbo floating at the left. On a phone the
-  same blocks move: mascot to a bust above the board, meter to a bar below it (§ below, `references/mobile-ui.md`).
-- **Popout L/S (800×450, 400×225):** compress the dock – values without labels, merge
-  balance/win into one cell, move secondary buttons into the menu, spin stays ≥ 44 px, board
-  keeps ≥ ~65% of the height.
-- **Mobile portrait** (measured on five games of one studio and on the owner's game; full evidence, tables and tools in `references/mobile-ui.md`):
-  the board frame bleeds to the full width and is anchored just below a **hero zone** (16 to 25% of the height on a 19.5:9 phone, mascot overlapping the board's top edge with its
-  lower body hidden behind the frame); the feature meter sits directly under the board (horizontal); a decorated **scene band of 11 to 13%** holds two floating buttons
-  (turbo or bonus left, emblem right); the HUD is pinned to the bottom: control bar (menu, bet −, spin about 18% of the width, bet +, autoplay) at 88 to 94%, a footer of three
-  values (balance, bet, win) at 95 to 100%. Never centre the stack in the free space and never leave a dark empty band: dead bands above 26% in total (`scripts/mobile_layout.py report`)
-  look unfinished. One asset set serves PC and phone; the layout comes from the window size. Test 360x800, 375x667, 390x844, 412x915 and a landscape phone with `scripts/mobile_capture.mjs`.
-- **Mobile landscape:** side-rail variant (spin right-middle, settings left).
-
-### 13.5 Visual rules
-- Text and icons over art always get a backing (panel, disk or gradient scrim); thin outline
-  icons straight on busy art fail contrast. Values need ≥ 4.5:1 contrast.
-- Colour roles: one accent for the primary action (spin), one for feature/buy; states via
-  fill vs outline; disabled ≈ 40% opacity; animate the spin ring while spinning.
-- Typography: a sturdy UI sans for labels/values; the theme display font only for logo/titles.
-- Skin with restraint (see §13.0): a subtle material hint on the dock edge and themed icon
-  glyphs are enough; keep the conventional positions and shapes so players instantly find spin,
-  bet and balance.
-- Localization: labels grow (de/fi/ru); test the longest value (e.g. "¥150,000,000"). Social mode:
-  "BET" → "PLAY AMOUNT"/"PLAY", "CREDIT" → "BALANCE"/"COINS", "BUY" → "GET"; no "AutoBET".
+**Full detail in `references/bet-ui-hud.md`**: §13.0 simplicity first, §13.1 layout archetypes, §13.2 anatomy and measurements, §13.3 mode and feature controls, §13.4 responsive variants (phone portrait and desktop, with `mobile_layout.py`), §13.5 visual rules. Phone numbers: `references/mobile-ui.md`; desktop wireframe: `references/layout-wireframes.md`.

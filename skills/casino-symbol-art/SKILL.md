@@ -1,6 +1,6 @@
 ---
 name: "casino-symbol-art"
-description: "Create and export 2D art for casino/slot games on PixiJS: slot symbols (low/high pay, Wild, Scatter, Bonus, card ranks), state variants, win-title art, reel frames, backgrounds and icons as layered SVG or painterly raster (code-painted, 80+ styles), with a style guide, readability checks at real reel size, lint for Stake-safe files, background cutout, and spritesheet export for Pixi v8. Use for any request to design, draw, redo or produce symbols or other 2D assets for a slot, even if the user does not say SVG or Pixi."
+description: "Create and export 2D art for casino/slot games on PixiJS: slot symbols, state variants, win-title art, reel frames, backgrounds, tile thumbnail, as layered SVG, code-painted raster or model-generated layers (theme harness with Valkyrie/Hacksaw-grade structure, style-lock and drift checks, symbol slicing, win sprites, PC/phone preview), plus symbol animation recipes, readability checks, Stake-safe lint and Pixi v8 atlas export. Use for any request to design, draw, redo or produce symbols or other 2D assets or their animation for a slot."
 ---
 
 # Casino symbol art
@@ -37,7 +37,7 @@ true hand-painted art. For that look without a generator, write an art brief for
 | Background, win-title scene, loading screen, key art, textured look | Raster | `references/raster-art.md` |
 | High-pay symbol with painterly texture | Raster (transparent sheet or cutout) | `references/raster-art.md` §3 |
 | "Premium slot look", "like Valkyrie / Hacksaw": scene structure, palette split, roundel premiums, rank colour code | Either | `references/style-valkyrie-hacksaw.md` §1–5 (principles only; never copy their characters or logos) |
-| Painted, studio-grade art (backdrop, hero, frame, board, full symbol set) | Model-generated layers | `references/style-valkyrie-hacksaw.md` §6, `scripts/compose_layered_screen.py`, `scripts/build_symbol_set.py` |
+| Painted, studio-grade art (backdrop, hero, frame, board, full symbol set) | Model-generated layers | `references/style-valkyrie-hacksaw.md` §6; the step-by-step chain after §1 (`art_harness.py` → image calls → `slice_symbols.py` → `fx_sprites.py` → `compose_screen.py`) |
 
 ## 1. Style guide first
 Lock these before the first symbol, then save them as `art/style.json` so every later asset
@@ -62,6 +62,15 @@ container is a theme choice, `premium_container`: `roundel` (shared round medall
 (rounded square) or `freeform` (each symbol its own frameless silhouette). For `freeform`, run
 `scripts/silhouette_check.py` and fix any pair above IoU 0.80 before compositing. The harness
 refuses brand or studio names in the theme.
+
+**Model-generated route, step by step** (every script reads the same `art/` folder; nothing here calls a model except step 2):
+1. `art_harness.py theme.json --out art` → `style.json`, `plan.json`, `motion.json`, `prompts/*.txt`.
+2. Image tool, one call per prompt file, anchors first (`plan.json`), saved as `art/layers/<asset>.png`. Ask the user before spending credits.
+3. `style_check.py art/style.json art/layers/*.png` after each call; regenerate FAILs (max 3).
+4. `slice_symbols.py art` → `art/symbols/*.png`, `manifest.json`, `_readability.png`; then `style_check.py` on `art/symbols/*.png` and, for `freeform`, `silhouette_check.py`.
+5. `fx_sprites.py art` → `art/fx/` (win sprites for the `win` recipe).
+6. `compose_screen.py art --layout pc` and `--layout phone` → previews to judge the set as one picture (phone numbers: `stake-casino-game-dev/scripts/mobile_layout.py`).
+7. Export for Pixi (§5) and hand off (§7). Tile for the dashboard: `tile_check.py`.
 
 **Symbol animation in code:** `scripts/symbol_fx.json` + `symbol_fx.mjs` hold drop_in, land, win, win_loop, appear, tease (and optional dim, idle) recipes as
 data (no Spine needed); `scripts/symbol_fx_preview.py` checks them and renders a demo video. Usage and status: `references/symbol-fx.md`. The `win` shape,
@@ -176,8 +185,8 @@ reels), win-tier title art (Big / Mega / Epic / Legendary / Max Win, from `stake
 §8; asset list and style rules in `references/win-celebration-art.md`), HUD icons (follow the simplicity-first rule in §13.0 there), loading logo, thumbnail (tile: `references/tile-thumbnail.md`, check with `scripts/tile_check.py`).
 
 ## 7. Hand-off
-Deliver the folder, not loose files: `art/motion.json` (a copy of `scripts/symbol_fx.json`, tuned; the round controller reads it), `art/fx/` (`flash_disc`, `glow_ring`,
-`glint` sprites, plus premium "lit" variants), `art/style.json` (with `style_lock` for generated sets),
+Deliver the folder, not loose files: `art/motion.json` (written by `art_harness.py` as a copy of `scripts/symbol_fx.json`; tune it, the round controller reads it), `art/fx/` (`flash_disc`, `glow_ring`,
+`glint` from `fx_sprites.py`, plus premium "lit" variants), `art/style.json` (with `style_lock` for generated sets),
 `art/prompts/` (final prompt per generated asset), `art/svg/` (SVG and any PNG symbols),
 `art/preview.png`, the `style_check.py` report,
 `public/assets/symbols*.{json,png|webp}`. Give two or three sentences: what was made, anything

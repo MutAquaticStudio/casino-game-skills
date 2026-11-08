@@ -9,7 +9,7 @@ Checks (FAIL = fix the recipe):
 Usage: python3 symbol_fx_preview.py symbol.png [--fill 0.84] [--fps 30] [--out fx_preview.mp4] [--cell 200]
 Needs: node, pillow, numpy, ffmpeg (for the mp4).
 """
-import argparse, json, math, os, subprocess, sys
+import argparse, json, math, os, subprocess, sys, tempfile
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
@@ -94,9 +94,9 @@ def main():
                 if len(t) > 1 and tracks[k] is not None and names[k] in ("win_loop", "tease", "win"): fr = t[(i % len(t))]
                 row.alpha_composite(fr, (k * a.cell, 22)); dr.text((k * a.cell + 8, 5), names[k], fill=(255, 220, 120, 255))
             sheet.append(row.convert("RGB"))
-        os.makedirs("_fx_frames", exist_ok=True)
-        for i, f in enumerate(sheet): f.save(f"_fx_frames/f_{i:04d}.png")
-        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-framerate", str(a.fps), "-i", "_fx_frames/f_%04d.png", "-vf", "format=yuv420p", a.out], check=True)
+        with tempfile.TemporaryDirectory() as tmp:
+            for i, f in enumerate(sheet): f.save(os.path.join(tmp, f"f_{i:04d}.png"))
+            subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-framerate", str(a.fps), "-i", os.path.join(tmp, "f_%04d.png"), "-vf", "format=yuv420p", a.out], check=True)
         print("wrote", a.out)
     sys.exit(1 if fails else 0)
 
