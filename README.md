@@ -30,6 +30,8 @@ Mở lại Claude Code. Gõ `/skills` để kiểm tra 4 skill đã hiện.
 
 > Script Python và code mẫu TypeScript trong `stake-casino-game-dev` chỉ chạy được ở môi trường có terminal (Claude Code hoặc máy của bạn). Trên Claude.ai, skill vẫn có bản rút gọn của script ngay trong `SKILL.md`.
 
+> Skill `casino-symbol-art` có kèm thư viện bên thứ ba (khoảng 7 MB, trong `references/vendor/`). Khi nén zip để upload lên Claude.ai, nhớ nén cả thư mục này.
+
 ### Công cụ cần cho script
 ```sh
 pip install zstandard          # để đọc file books .jsonl.zst
@@ -202,7 +204,7 @@ Quy tắc chính: nhạc cấp thắng chỉ phát từ Big Win trở lên, đ�
 
 ## 6. Hướng dẫn dùng `casino-symbol-art`
 
-Dùng khi cần **tạo art 2D** cho game: symbol, khung guồng, nền, win title, icon. Skill đi theo vòng: chốt style guide → vẽ từng symbol bằng SVG nhiều layer → xem preview ở kích thước thật → xuất atlas cho PixiJS.
+Dùng khi cần **tạo art 2D** cho game: symbol, khung guồng, nền, win title, icon. Skill đi theo vòng: chốt style guide (`art/style.json`) → vẽ từng symbol (SVG nhiều layer, hoặc raster vẽ bằng code cho art có texture) → xem preview ở kích thước thật → xuất atlas cho PixiJS.
 
 ```
 Tạo style guide và bộ symbol cho slot chủ đề thần thoại Việt: 5 low pay (bài 10–A),
@@ -246,7 +248,18 @@ python3 skills/casino-symbol-art/scripts/svg_to_atlas.py build   art/svg --out p
 - `build`: ra `symbols@1x/@2x.json + .png (hoặc .webp)` theo định dạng Pixi đọc thẳng, `meta.scale` khớp ảnh. Đã kiểm tra nạp được bằng PixiJS 8.22. `build` và `preview` nhận cả file PNG trong suốt đặt chung thư mục (SVG trùng tên thì SVG thắng).
 - `raster_cutout.py`: tách nền cho ảnh raster (màu key hoặc tự dò từ 4 góc, flood-fill từ viền nên màu giống nền nằm bên trong symbol vẫn giữ), làm mềm và khử viền, cắt và căn giữa vào ô vuông. Ví dụ: `python3 skills/casino-symbol-art/scripts/raster_cutout.py art/raw art/svg --cell 512 --key "#ff00ff"`.
 
-Giới hạn: đây là art vector/procedural (flat, glossy casino, gem, coin, khung hoa văn). Không thay được art vẽ tay kiểu painterly; khi cần, skill viết brief cho hoạ sĩ và vẫn dùng phần pipeline. Luật Stake vẫn áp dụng: art phải độc quyền, không dùng nhân vật/thương hiệu có bản quyền, không dùng asset mẫu của Web SDK.
+**Chọn hướng nào:**
+
+| Cần làm | Hướng | Đọc |
+|---|---|---|
+| Symbol, icon, khung, kiểu flat hoặc glossy casino | SVG | `SKILL.md` §3, `references/svg-craft.md` |
+| Nền, màn win, loading, key art, art có texture | Raster vẽ bằng code | `references/raster-art.md` |
+| Symbol cao cấp có texture (sơn dầu, mực…) | Raster: tấm trong suốt `sticker.Art` hoặc vẽ trên màu key rồi `raster_cutout.py` | `references/raster-art.md` §3 |
+| Art vẽ tay hoặc photoreal | Hoạ sĩ: skill viết brief, pipeline vẫn dùng cho preview và atlas | `references/symbol-design.md` §7 |
+
+Lưu ý khi dùng raster: thư viện vẽ cả cảnh (một ảnh 1080p mất khoảng 10 giây trở lên), không phải công cụ vẽ icon; mỗi bộ symbol chỉ nên dùng một hướng và ghi vào `style.json` (`engine`, `seed`); không vẽ chữ vào nền hoặc title vì cần chữ thật cho đa ngôn ngữ; raster không tách layer cho Spine được. Cảnh ví dụ trong thư viện chỉ để học cách dùng, không dùng làm art cho game.
+
+Luật Stake vẫn áp dụng: art phải độc quyền, không dùng nhân vật/thương hiệu có bản quyền, không dùng asset mẫu của Web SDK, bản build tĩnh không gọi font hoặc ảnh từ ngoài.
 
 ---
 
@@ -255,7 +268,7 @@ Giới hạn: đây là art vector/procedural (flat, glossy casino, gem, coin, k
 ```
 1. stake-casino-game-dev  → 3 ý tưởng → chọn 1 → tài liệu thiết kế
 2. stake-casino-game-dev  → code toán học → validate_math.py đạt yêu cầu
-3. casino-symbol-art      → style guide, symbol SVG, atlas, win title, khung guồng, nền
+3. casino-symbol-art      → style guide, symbol (SVG hoặc raster), atlas, win title, khung guồng, nền
 4. stake-casino-game-dev  → frontend + win celebration + đa ngôn ngữ
 5. casino-audio-design    → định hướng, file âm thanh, AudioManager
 6. casino-game-audit      → audit, sửa lỗi, audit lại
@@ -280,17 +293,27 @@ Tóm tắt từ tài liệu chính thức (https://stakeengine.github.io/docs/) 
 ```
 skills/
 ├── stake-casino-game-dev/
-│   ├── SKILL.md
-│   ├── scripts/        validate_math.py, check_social_terms.py, check_static_build.py
-│   ├── assets/         rgs-client.ts, book-player.ts
-│   └── references/     stake-engine/*.md, pixijs/ (skill PixiJS chính thức), threejs/, gamedev/
+│   ├── SKILL.md                 quy trình 13 mục: ý tưởng, toán, frontend, win celebration, đa ngôn ngữ, PixiJS 8.22, Bet UI
+│   ├── scripts/                 validate_math.py, check_social_terms.py, check_static_build.py
+│   ├── assets/                  rgs-client.ts, book-player.ts
+│   └── references/
+│       ├── stake-engine/        overview, math-requirements, math-sdk, rgs-api, frontend-requirements, approval-checklist
+│       ├── pixijs/vendor/       26 skill PixiJS chính thức (đổi SKILL.md thành GUIDE.md)
+│       ├── threejs/             casino-3d.md + vendor/ (13 hướng dẫn Three.js)
+│       └── gamedev/vendor/      11 hướng dẫn game dev (game-feel, audio, UI/UX, hiệu năng, shader…)
 ├── casino-game-audit/SKILL.md
 ├── casino-audio-design/SKILL.md
 └── casino-symbol-art/
     ├── SKILL.md
-    ├── scripts/        svg_to_atlas.py (lint, preview, layers, build), raster_cutout.py
-    └── references/     symbol-design.md, export-and-pixi.md, svg-craft.md, raster-art.md,
-                        vendor/ (svg-design/, claude-drawing/)
+    ├── scripts/                 svg_to_atlas.py (lint, preview, layers, build), raster_cutout.py
+    └── references/
+        ├── symbol-design.md     style.json, palette, trạng thái symbol, asset khác, brief hoạ sĩ
+        ├── export-and-pixi.md   atlas, tải trong Pixi v8, SymbolView, Spine
+        ├── svg-craft.md         hướng SVG: chỗ nào đọc svg-design, chỗ nào ghi đè
+        ├── raster-art.md        hướng raster: chọn phong cách, 2 cách làm symbol, ràng buộc
+        └── vendor/
+            ├── svg-design/      hướng dẫn SVG (opendesign, MIT)
+            └── claude-drawing/  thư viện vẽ bằng code: lib/ (83 module), examples/ (86 script), docs/ (MIT)
 ```
 
 ## 10. Nguồn và giấy phép
