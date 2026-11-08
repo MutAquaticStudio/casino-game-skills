@@ -12,6 +12,10 @@ do not describe the tier screens (Big, Mega, Epic, Max) until a clip of one exis
 One related observation that is evidenced: inside a game Valkyrie escalates Wild multiplier tiers by hue and finish
 (`style-valkyrie-hacksaw.md` §9), which supports escalating win tiers the same way.
 
+Structure evidence from the file inventory of Odin's Vault (names and sizes only, `stake-casino-game-dev/references/mobile-ui.md` §3): a reference game ships **five win-tier animations**
+(nice, big, mega, insane, max, with extra variants for the top two) and a separate TOTAL WIN plate and bonus intros per bonus level, each as its own Spine skeleton, plus backgrounds per
+bonus level. That supports the per-tier asset plan below; timing of those screens was not captured.
+
 ## 1. Asset list per screen (from §8.3)
 | Screen | Art assets | Made by |
 |---|---|---|

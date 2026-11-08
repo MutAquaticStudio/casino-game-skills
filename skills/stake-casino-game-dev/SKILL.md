@@ -53,7 +53,7 @@ Consequences:
 | 3 Art | `casino-symbol-art` | concept theme + mode list + real symbol size | `art/style.json` (with `style_lock`), symbol atlas, frame, board, backdrop, win/transition art | `style_check.py` no FAIL; shrink and greyscale tests; `silhouette_check.py` for frameless symbols; `tile_check.py` on the tile; originality |
 | 4 Frontend | this skill, Phase 3, §12–13 | books, atlas, event list | static build wired to RGS, HUD, win celebration, locales | check_static_build.py clean; every book event type has a handler |
 | 5 Audio | `casino-audio-design` | event list, tier table | audio files + AudioManager | event → sound table complete |
-| 6 Integration | this skill, Phase 4 | build | test results across currencies, modes, sizes | 10 wins per mode match RGS payout |
+| 6 Integration | this skill, Phase 4 | build | test results across currencies, modes, sizes | 10 wins per mode match RGS payout; phone layouts pass `mobile_layout.py report` (§13.4) |
 | 7 Audit | `casino-game-audit` | build or screenshots | scored report | no blockers; Graphics & art direction (area A) ≥ 4 |
 | 8 Submit | this skill, Phase 5 | audited build | replay IDs, tile, submission | Stake checklist all ✅ |
 Handoff files travel with the project: concept doc → `art/style.json` + event list → atlas and win
@@ -544,7 +544,7 @@ Order of one round inside the book-event player (each step awaited, none skipped
 1. **Clear**: symbols leave the board (about 0.3 s). Then an **empty beat** (about 0.25 s). A visible reset, not dead time.
 2. **Enter**: columns drop in left to right, about **0.16 s apart**, 0.25 to 0.45 s per column; each symbol plays `land` (authored, 150 to 300 ms).
 3. **Specials announce on arrival**: a Wild or Scatter that lands gets its own flash and ring (about 0.8 s), not only when it pays.
-4. **Win highlight**: each winning symbol plays `win`, one shot of about **0.65 s** (emissive flash, glow ring, glint, fade). Do not dim the others by default.
+4. **Win highlight**: each winning symbol plays `win`, one shot of about **0.65 s** (emissive flash, glow ring, glint, fade). Dimming the others is a design choice (one reference game did not dim, another dimmed non-winners while winners glowed); keep the winners clearly brighter either way.
    Show the **win amount on the winning group** for the same duration; update the **HUD WIN field after** the highlight (about 0.85 s after it started).
    Several wins or cascades: play the highlights in sequence, never overlapping.
 5. Only when `winLevel` is Big or above (§8.1): the tier celebration of §8.3, after the highlight and before the next round.
@@ -554,7 +554,7 @@ Order of one round inside the book-event player (each step awaited, none skipped
 | Whole round, clear to settled | about 1.0 s; investigate above 1.4 s | measured |
 | Empty beat between clear and enter | about 0.25 s | measured |
 | Column stagger | about 0.16 s | measured (read from frames) |
-| Small-win highlight | about 0.65 s, one shot, no dimming | measured |
+| Small-win highlight | about 0.65 s, one shot | measured (in the game that did not dim) |
 | HUD update after the highlight | about 0.85 s after its start | measured |
 | Special symbol arrival flash | about 0.8 s | measured on one symbol |
 | `land` squash and stretch | 150 to 300 ms | authored |
@@ -847,9 +847,12 @@ Default for Stake games: **A** for desktop/popout (safest for approval and the 4
 - **Popout L/S (800×450, 400×225):** compress the dock – values without labels, merge
   balance/win into one cell, move secondary buttons into the menu, spin stays ≥ 44 px, board
   keeps ≥ ~65% of the height.
-- **Mobile portrait:** board on top; controls in the bottom ~30%: big spin centred, bet −/+ on
-  either side, turbo/autoplay small beside them, balance/win row above, menu in a top corner;
-  the spin sits in the natural thumb zone.
+- **Mobile portrait** (measured on five games of one studio and on the owner's game; full evidence, tables and tools in `references/mobile-ui.md`):
+  the board frame bleeds to the full width and is anchored just below a **hero zone** (16 to 25% of the height on a 19.5:9 phone, mascot overlapping the board's top edge with its
+  lower body hidden behind the frame); the feature meter sits directly under the board (horizontal); a decorated **scene band of 11 to 13%** holds two floating buttons
+  (turbo or bonus left, emblem right); the HUD is pinned to the bottom: control bar (menu, bet −, spin about 18% of the width, bet +, autoplay) at 88 to 94%, a footer of three
+  values (balance, bet, win) at 95 to 100%. Never centre the stack in the free space and never leave a dark empty band: dead bands above 26% in total (`scripts/mobile_layout.py report`)
+  look unfinished. One asset set serves PC and phone; the layout comes from the window size. Test 360x800, 375x667, 390x844, 412x915 and a landscape phone with `scripts/mobile_capture.mjs`.
 - **Mobile landscape:** side-rail variant (spin right-middle, settings left).
 
 ### 13.5 Visual rules

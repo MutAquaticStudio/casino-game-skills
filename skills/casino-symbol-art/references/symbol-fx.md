@@ -7,11 +7,11 @@ For reel symbols, a few small tweens carry most of the feel. The recipes live as
 |---|---|---|---|
 | `drop_in` | 0.34 s | a symbol falls into its column; start columns about 0.16 s apart, left to right; follow with `land` | cycle and stagger measured, fall curve authored |
 | `land` | 0.30 s | squash and stretch on landing (1.10 x 0.88, then 0.97 x 1.045, then 1) | authored |
-| `win` | 0.65 s, one shot | flash to an emissive state, ring glow, glint at 0.4 s, fade; tracks `scaleX`, `scaleY`, `glow`, `flash`, `glint`; does not dim the others | shape measured (`animation-timing.md` §2) |
+| `win` | 0.65 s, one shot | flash to an emissive state, ring glow, glint at 0.4 s, fade; tracks `scaleX`, `scaleY`, `glow`, `flash`, `glint`; dimming the others is a design choice | shape measured (`animation-timing.md` §2) |
 | `win_loop` | 0.72 s loop | repeating pulse for a highlight that must stay on screen | authored |
 | `appear` | 0.22 s | pop-in for tumbles and cascades | authored |
 | `tease` | 0.50 s loop | scatter anticipation | authored |
-| `dim` | 0.18 s | optional: darken the others when an overlay needs contrast; the reference game does not dim | authored |
+| `dim` | 0.18 s | optional: darken the others; one reference game did not dim, another (Odin's Vault, one frame) did | authored |
 | `idle` | 2.8 s loop | optional: slow breathing; the reference game's resting symbols were still, so skip it by default | authored |
 
 ```ts

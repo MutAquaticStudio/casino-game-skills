@@ -68,6 +68,12 @@ data (no Spine needed); `scripts/symbol_fx_preview.py` checks them and renders a
 the board-cycle timing and the bonus flow come from measuring a reference game's demo: `references/animation-timing.md` (timing and structure to reuse, never their art);
 `scripts/anim_probe.py` repeats that measurement on any demo recording or on our own build.
 
+**Phone portrait composition (art deliverables):** the reference game ships one asset set and recomposes it for PC and phone at runtime, so build the art to be recomposed
+(`stake-casino-game-dev/references/mobile-ui.md`): the **mascot must read as a bust** (face, shoulders, held item and companions in the top 60 percent of the figure) because on a phone only that part shows above the
+board frame and the lower body is hidden behind it; the **feature meter is made of parts** that can sit in a vertical panel on PC and a horizontal bar on a phone; the **background is layered** (sky, middle, ground,
+plus a detailed ground band for tall phones) so the crop can change, with the key scene in the middle and 15 percent of spare art at the top and bottom; the logo works small, next to the mascot. Plan a hero zone of 16 to 25 percent of
+the phone's height and a decorated scene band of 11 to 13 percent below the meter. Check a composition with `stake-casino-game-dev/scripts/mobile_layout.py`.
+
 **Style lock (required for the model-generated route, useful for all):** add a `style_lock` block
 to `style.json` (model, verbatim prompt prefix, key colour, aspect per asset type), paste the
 prefix first in every generation prompt, generate anchors first, and run

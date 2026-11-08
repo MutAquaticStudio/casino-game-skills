@@ -25,10 +25,11 @@ Timeline from the first highlight frame (80 ms resolution):
 - 0.16 to 0.40 s: it settles into a glowing glass-like version of the symbol with a ring glow (scale about 1.1).
 - about 0.40 s: a small glint (star sparkle) crosses it.
 - 0.40 to about 0.65 s: the glow fades and the symbol returns to rest. One shot, no looping pulse.
-- **The other symbols are not dimmed.** The highlight is carried by emission, not by darkening the rest.
+- **In this game the other symbols are not dimmed.** The highlight is carried by emission, not by darkening the rest. Dimming is a per-game choice: Odin's Vault, another game of the same studio, was seen
+  in one phone frame with the three winning tiles glowing and every other symbol darkened (timing not measured). Pick one behaviour per game and keep winners clearly brighter than the rest.
 - A **win amount label** ("0.70") appears at the centre of the winning group for about the same 0.7 s, in the game's own numeral font.
 - The HUD WIN field updates **after** the highlight, about 0.85 s after it started, not at the same moment.
-Principles: swap to an emissive state rather than scaling a loop; show the amount where the eye already is (on the group), then let the HUD follow;
+Principles: swap to an emissive state rather than scaling a loop (dim the rest only if the design wants it); show the amount where the eye already is (on the group), then let the HUD follow;
 keep it short enough that a fast player is never waiting. The recipe `win` in `scripts/symbol_fx.json` follows this shape (the `flash` and
 `glint` tracks drive overlays; the old pulse is kept as `win_loop`).
 

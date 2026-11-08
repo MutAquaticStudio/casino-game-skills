@@ -63,7 +63,7 @@ Look at the screenshots yourself (open the images) rather than guessing from cod
 - Turbo keeps essential FX and keeps results legible.
 - **Timing check** (from a recording or the live build; reference values from one game, so flag a deviation of about 2x, not 20 percent):
   a whole round from clear to settled near 1.0 s (rolling reels: stops staggered about 0.16 s, spin plus stops near 1 to 1.5 s); columns or reels
-  entering with a visible stagger; a small-win highlight of 0.5 to 0.9 s, played once, that does not hide the symbols and does not need the others dimmed; the win amount near
+  entering with a visible stagger; a small-win highlight of 0.5 to 0.9 s, played once, that does not hide the symbols (dimming the non-winners is a legitimate choice, but winners must stay clearly brighter); the win amount near
   the winning group and the HUD WIN field updating after the highlight, not before; special symbols (Wild, Scatter) that announce themselves when they land; a bonus that
   keeps the base-game rhythm, with an intro plate and a TOTAL WIN plate that wait for the player. Measure with `casino-symbol-art/scripts/anim_probe.py` (`frames`, `montage`, `cycle`);
   state the method and the frame rate in the report, and say which items could not be checked.
@@ -103,6 +103,10 @@ bet mode switches (base ↔ boost ↔ bonus buy); entering/leaving replay.
   hold-to-spin / hold-space continuous spinning, autoplay that starts on one tap, missing bet
   levels, missing sound toggle; flag operator widgets (lobby, tournaments) inside the game.
 - Popout 400×225 and mobile portrait/landscape variants exist and keep spin, bet and balance usable.
+- **Phone portrait composition** (reference values from five games of one studio, `stake-casino-game-dev/references/mobile-ui.md`): board frame at the full width and anchored just below a hero
+  zone; a mascot or hero above the board rather than an empty top band; feature meter directly under the board; no dark or empty band between the board and the HUD (dead bands up to 26% of the
+  height in total is the reference range; measure with `scripts/mobile_layout.py report`); HUD pinned to the bottom with a spin of about 18% of the width; layout recomputed from the window size
+  at 360x800, 375x667, 390x844, 412x915 and a landscape phone (capture with `scripts/mobile_capture.mjs`).
 
 ### F. Spacing, layout & typography
 - A spacing scale (4/8 px grid) used consistently; equal margins around the board; HUD on a

@@ -85,7 +85,7 @@
   }
  },
  "win": {
-  "_note": "MEASURED shape (reference game, small win, 25 fps footage, +-40 ms): the winning symbol flashes into an emissive disc (0 to 0.16 s), settles into a glowing glass-like state with a ring glow (0.16 to 0.40 s), a small glint at about 0.4 s, glow fades out by about 0.65 s. One shot, no loop, no dimming of others. `flash` is an overlay (additive disc) alpha, `glint` a star sprite alpha.",
+  "_note": "MEASURED shape (reference game, small win, 25 fps footage, +-40 ms): the winning symbol flashes into an emissive disc (0 to 0.16 s), settles into a glowing glass-like state with a ring glow (0.16 to 0.40 s), a small glint at about 0.4 s, glow fades out by about 0.65 s. One shot, no loop; this game did not dim the others (another game of the studio did). `flash` is an overlay (additive disc) alpha, `glint` a star sprite alpha.",
   "loop": false,
   "duration": 0.65,
   "tracks": {
@@ -429,7 +429,7 @@
     ]
    ]
   },
-  "_note": "OPTIONAL. The reference game does NOT dim non-winning symbols during a win highlight; use only when an overlay needs the contrast."
+  "_note": "OPTIONAL. One reference game did not dim non-winning symbols during a win highlight, another dimmed them while the winners glowed; a per-game choice."
  },
  "idle": {
   "loop": true,
