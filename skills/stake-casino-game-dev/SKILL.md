@@ -843,7 +843,10 @@ Default for Stake games: **A** for desktop/popout (safest for approval and the 4
   wraps the game itself.
 
 ### 13.4 Responsive variants
-- **Desktop / laptop:** full dock with labels.
+- **Desktop / laptop** (nine games measured, wireframes and table in `references/layout-wireframes.md`): board frame centred (about 53% of the width, 83% of the height, it may run under the dock);
+  the **mascot stands on one outer side** (about 20% of the width, full body; 5 of 9 on the left, 3 on the right) with the feature meter or panel on the opposite side; logo above the mascot or centred on the
+  frame top; one HUD dock at 83 to 96% of the height (menu, balance, win, bet with arrows, autoplay, spin about 12% of the height, emblem at the right end), turbo floating at the left. On a phone the
+  same blocks move: mascot to a bust above the board, meter to a bar below it (§ below, `references/mobile-ui.md`).
 - **Popout L/S (800×450, 400×225):** compress the dock – values without labels, merge
   balance/win into one cell, move secondary buttons into the menu, spin stays ≥ 44 px, board
   keeps ≥ ~65% of the height.

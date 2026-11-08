@@ -5,6 +5,8 @@ the controls, looks unfinished. This file gives measured examples, what a good s
 and a recipe with tools. Everything is evidence from public demos plus two phone screenshots from the owner; thresholds are calibrated on
 that evidence, not on a standard. Re-measure on your own build.
 
+PC (landscape) wireframes, the mascot on one side of the board and the PC to phone mapping of every block are in `layout-wireframes.md`.
+
 Method: Playwright with phone emulation (390x844 CSS px, device pixel ratio 2, touch, mobile user agent) on five public demos of one
 studio, plus 360x800 and 375x667 for one of them, plus a PC viewport (1280x720); a phone screenshot of Odin's Vault taken by the game's owner
 (366x710); and the owner's own game, Inkblade Ronin (780x1688 screenshot, measured by eye). Tools: `scripts/mobile_capture.mjs` (capture, request

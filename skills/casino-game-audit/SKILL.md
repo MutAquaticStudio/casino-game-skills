@@ -103,6 +103,8 @@ bet mode switches (base ↔ boost ↔ bonus buy); entering/leaving replay.
   hold-to-spin / hold-space continuous spinning, autoplay that starts on one tap, missing bet
   levels, missing sound toggle; flag operator widgets (lobby, tournaments) inside the game.
 - Popout 400×225 and mobile portrait/landscape variants exist and keep spin, bet and balance usable.
+- **PC composition** (nine games of one studio, `stake-casino-game-dev/references/layout-wireframes.md`): board centred and large (about half the width, 80% of the height or more), mascot on one outer side as a
+  full-body column of about 20% of the width, feature widget on the opposite side, one HUD dock at the bottom; no mascot or widget crowding the symbols, nothing important hidden under the dock.
 - **Phone portrait composition** (reference values from five games of one studio, `stake-casino-game-dev/references/mobile-ui.md`): board frame at the full width and anchored just below a hero
   zone; a mascot or hero above the board rather than an empty top band; feature meter directly under the board; no dark or empty band between the board and the HUD (dead bands up to 26% of the
   height in total is the reference range; measure with `scripts/mobile_layout.py report`); HUD pinned to the bottom with a spin of about 18% of the width; layout recomputed from the window size

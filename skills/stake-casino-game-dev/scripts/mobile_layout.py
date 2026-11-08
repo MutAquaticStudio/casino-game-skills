@@ -10,6 +10,8 @@ looks unfinished and puts the spin button far from the board. These tools turn t
            python3 mobile_layout.py solve --viewport 390x844 --board-aspect 1.34 --meter-h 0.12 --hud 0.2 [--hero-min 0.16] [--scene 0.12] [--gap 0.02] [--png solved.png]
            (meter-h is a fraction of the viewport WIDTH; hud, hero-min, scene and gap are fractions of the HEIGHT; board-aspect = board frame width / height.
             hero-min is the smallest hero zone you accept; the reference at 390x844 had about 0.16 to 0.18, at 375x667 about 0.12)
+  wireframe  draw schematic wireframes from spec files (one panel per spec, or --average for the mean layout of a group):
+           python3 mobile_layout.py wireframe specs/*.json --out wireframes.png [--average --title "PC, mascot on the left"]
   grid     draw a 10 percent grid with pixel and percent labels on a screenshot, to read rectangles:
            python3 mobile_layout.py grid shot.png --out shot_grid.png
 
@@ -127,6 +129,44 @@ def solve(a):
     if a.png: draw({"image": (vw, vh)}, R, f"solved {vw}x{vh}", (vw, vh)).save(a.png); print("wrote", a.png)
 
 
+def wireframe(a):
+    """Draw wireframes from spec files (desktop or phone, any viewport), one panel each; with --average, one panel per group of specs showing the mean
+    of each block's rectangle (as a fraction of the viewport). Original schematic drawings, not screenshots."""
+    COLS = {"logo": (240, 200, 90), "mascot": (240, 130, 150), "board": (90, 180, 240), "meter": (180, 140, 240), "panel": (180, 140, 240), "scene": (110, 150, 110),
+            "float_l": (120, 220, 150), "float_r": (120, 220, 150), "controls": (120, 220, 150), "balance": (120, 220, 150), "hud": (120, 220, 150), "spin": (255, 120, 90)}
+    LAB = {"float_l": "turbo", "float_r": "emblem", "hud": "HUD dock", "controls": "control bar", "balance": "balance | bet | win", "logo": "logo / hero", "panel": "side panel"}
+    specs = [json.load(open(p)) for p in a.specs]
+    groups = []
+    if a.average:
+        names = sorted({k for sp in specs for k in sp["rects"]})
+        vw, vh = specs[0]["viewport"]; avg = {}
+        for k in names:
+            have = [sp for sp in specs if k in sp["rects"]]
+            fr = [(sp["rects"][k][0] * sp["viewport"][0] / sp["image"][0] / sp["viewport"][0], sp["rects"][k][1] * sp["viewport"][1] / sp["image"][1] / sp["viewport"][1],
+                   sp["rects"][k][2] * sp["viewport"][0] / sp["image"][0] / sp["viewport"][0], sp["rects"][k][3] * sp["viewport"][1] / sp["image"][1] / sp["viewport"][1]) for sp in have]
+            m = [sum(v[i] for v in fr) / len(fr) for i in range(4)]
+            avg[k] = (m[0] * vw, m[1] * vh, m[2] * vw, m[3] * vh, len(have))
+        groups.append((a.title or "average", (vw, vh), avg, len(specs)))
+    else:
+        for sp in specs:
+            vw, vh = sp["viewport"]; iw, ih = sp["image"]
+            groups.append((sp.get("name", ""), (vw, vh), {k: (v[0] * vw / iw, v[1] * vh / ih, v[2] * vw / iw, v[3] * vh / ih, 1) for k, v in sp["rects"].items()}, 1))
+    H = a.height; panels = []
+    for title, (vw, vh), rects, n in groups:
+        sc = H / vh; W = int(vw * sc)
+        im = Image.new("RGB", (W + 4, H + 28), (24, 28, 38)); d = ImageDraw.Draw(im); f = font(11)
+        d.rectangle((2, 26, W + 2, H + 26), outline=(120, 130, 150), width=2); d.text((6, 6), (title + (f" (mean of {n})" if a.average else ""))[:60], fill=(255, 255, 255), font=f)
+        order = ["board", "scene", "panel", "meter", "mascot", "logo", "hud", "controls", "balance", "float_l", "float_r", "spin"]
+        for k, (x, y, w, h, c) in sorted(rects.items(), key=lambda kv: order.index(kv[0]) if kv[0] in order else 99):
+            col = COLS.get(k, (200, 200, 200)); X, Y, Wd, Hd = 2 + x * sc, 26 + y * sc, w * sc, h * sc
+            d.rectangle((X, Y, X + Wd, Y + Hd), outline=col, width=2, fill=tuple(int(v * 0.22) for v in col))
+            d.text((X + 4, Y + 3), LAB.get(k, k) + (f" ({c}/{n})" if a.average and c < n else ""), fill=col, font=f)
+        panels.append(im)
+    sheet = Image.new("RGB", (sum(p.width for p in panels) + 12 * (len(panels) - 1), max(p.height for p in panels)), (10, 10, 12)); x = 0
+    for p in panels: sheet.paste(p, (x, 0)); x += p.width + 12
+    sheet.save(a.out); print("wrote", a.out, sheet.size)
+
+
 def grid(a):
     im = Image.open(a.shot).convert("RGB"); W, H = im.size; d = ImageDraw.Draw(im, "RGBA"); f = font(max(12, W // 40))
     for i in range(1, 10):
@@ -144,9 +184,12 @@ def main():
     p.add_argument("--hud", type=float, default=0.125, help="HUD height as a fraction of the viewport height"); p.add_argument("--gap", type=float, default=0.02, help="gap between blocks as a fraction of the height")
     p.add_argument("--side", type=float, default=0.01, help="side margin as a fraction of the width"); p.add_argument("--png")
     p = sub.add_parser("grid"); p.add_argument("shot"); p.add_argument("--out", required=True)
+    p = sub.add_parser("wireframe"); p.add_argument("specs", nargs="+"); p.add_argument("--out", required=True); p.add_argument("--average", action="store_true", help="one panel with the mean rectangle of each block")
+    p.add_argument("--title"); p.add_argument("--height", type=int, default=420)
     a = ap.parse_args()
     if a.cmd == "solve": return solve(a)
     if a.cmd == "grid": return grid(a)
+    if a.cmd == "wireframe": return wireframe(a)
     spec = json.load(open(a.spec)); res = check(spec)
     print(spec.get("name", ""), "viewport", "x".join(str(v) for v in spec["viewport"]))
     for n, v, vd, note in res: print(f"{n:16} {v:36} {vd:5} {note}")
