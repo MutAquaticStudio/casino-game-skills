@@ -7,7 +7,7 @@ Bộ **Agent Skills** (định dạng `SKILL.md`) giúp Claude thiết kế, xâ
 | [`stake-casino-game-dev`](skills/stake-casino-game-dev/SKILL.md) | Quy trình đầy đủ: lên ý tưởng game có chiều sâu và nhiều mode, toán học (Math SDK, RTP, wincap), tích hợp RGS, frontend PixiJS/Three.js, win celebration chuẩn Stake, đa ngôn ngữ, replay, checklist nộp duyệt |
 | [`casino-game-audit`](skills/casino-game-audit/SKILL.md) | Audit chất lượng: đồ hoạ, render, hiệu ứng, chuyển cảnh giữa các mode, giao diện cược, khoảng cách và font chữ, win celebration, âm thanh, đa ngôn ngữ. Chấm điểm và báo cáo lỗi theo thứ tự ưu tiên |
 | [`casino-audio-design`](skills/casino-audio-design/SKILL.md) | Thiết kế và lập trình âm thanh: nhạc base/bonus, hiệu ứng guồng quay, nhạc cấp thắng, mixing, Howler/Web Audio, brief cho người làm nhạc, kiểm tra âm thanh |
-| [`casino-symbol-art`](skills/casino-symbol-art/SKILL.md) | Tạo art 2D cho game slot: style guide, symbol (low/high pay, Wild, Scatter, Bonus, bài) dạng SVG nhiều layer, kiểm tra độ đọc được ở kích thước thật và popout, xuất spritesheet cho PixiJS v8, tách layer cho Spine, art win title/khung guồng/nền/icon, brief cho hoạ sĩ. Có hai hướng: SVG vẽ tay (kèm bộ hướng dẫn svg-design) và art raster vẽ bằng code với hơn 80 phong cách (nền, màn win, symbol có texture) |
+| [`casino-symbol-art`](skills/casino-symbol-art/SKILL.md) | Tạo art 2D cho game slot: style guide, symbol (low/high pay, Wild, Scatter, Bonus, bài) dạng SVG nhiều layer, kiểm tra độ đọc được ở kích thước thật và popout, xuất spritesheet cho PixiJS v8, tách layer cho Spine, art win title/khung guồng/nền/icon, brief cho hoạ sĩ. Có ba hướng: SVG vẽ tay (kèm bộ hướng dẫn svg-design), art raster vẽ bằng code với hơn 80 phong cách (nền, màn win, symbol có texture), và **art tranh vẽ do mô hình tạo ảnh sinh từng lớp** (nền, nhân vật, khung, nền guồng, bộ symbol) rồi ghép bằng code, kèm nghiên cứu style Valkyrie Studio và Hacksaw Gaming |
 
 ---
 
@@ -224,15 +224,25 @@ Tách layer symbol rồng để làm animation Spine cho vòng quay thắng lớ
 Viết brief cho hoạ sĩ vẽ tay bộ symbol này, kèm thông số kỹ thuật và tiêu chí đọc được.
 ```
 
-**Hai hướng làm art:**
+**Ba hướng làm art:**
 - **SVG** (mặc định): symbol, icon, khung, kiểu flat hoặc glossy casino. Phần khó (cung tròn, gradient, mask, filter, tối ưu SVGO mà không làm mất tên layer) có hướng dẫn trong `references/svg-craft.md`, dựa trên bộ [svg-design](https://github.com/tryopendata/skills) (plugin opendesign).
 - **Raster vẽ bằng code**: nền, màn win, loading, key art, và symbol cao cấp có texture (mực, sơn dầu, màu nước, mosaic, kính màu, comic, pixel…). Dùng thư viện numpy + Pillow của [claude-drawing-skill](https://github.com/cloveric/claude-drawing-skill) với 82 phong cách. Xem `references/raster-art.md`.
+
+- **Lớp tranh do mô hình tạo ảnh sinh** (chất lượng tranh vẽ kiểu studio slot lớn): mỗi lớp một lần gọi mô hình ảnh (nền, nhân vật, khung, nền guồng, bảng symbol), nền màu magenta phẳng để tách, rồi ghép bằng code. Chữ, huy hiệu hệ số, nút quay và thanh điều khiển vẽ bằng code. Chỉ dùng khi có công cụ tạo ảnh và bạn đồng ý chi phí (mỗi lớp là một lần gọi, tốn credit). Xem `references/style-valkyrie-hacksaw.md` (phần 6 là quy trình, phần 1–5 là nghiên cứu style).
 
 ```
 Làm nền base game và nền bonus cho slot chủ đề Ai Cập cổ, kiểu tranh tường mộ cổ, giữ vùng giữa yên tĩnh cho guồng quay.
 ```
 ```
 Vẽ symbol High 1 là mặt nạ vàng bằng sơn dầu, tách nền, rồi xuất atlas cùng các symbol SVG.
+```
+
+Ví dụ cho hướng tranh do mô hình sinh:
+```
+Làm bộ art tranh vẽ cho slot chủ đề thần thoại Việt theo cấu trúc studio lớn: nền nhiều lớp,
+nhân vật lớn bên trái, khung rồng, nền guồng có hoa văn mờ và vạch chia cột, bộ symbol đầy đủ
+(chữ bài A–10 mỗi hạng một màu, 8 premium trong huy hiệu tròn, Wild, Scatter, Bonus).
+Hỏi tôi trước khi tốn credit tạo ảnh.
 ```
 
 Script đi kèm (cần `pillow` và `rsvg-convert` hoặc `cairosvg`, xem mục 1):
@@ -246,6 +256,8 @@ python3 skills/casino-symbol-art/scripts/svg_to_atlas.py build   art/svg --out p
 - `preview`: bản full size trên nền caro và bản **kích thước thật trong guồng** trên nền tối. Luôn mở ảnh này ra xem, đừng chỉ tin code render được.
 - `layers`: xuất mỗi `<g id>` cấp cao thành PNG cùng canvas, kèm `layers.json` ghi thứ tự xếp lớp, để đưa vào Spine.
 - `build`: ra `symbols@1x/@2x.json + .png (hoặc .webp)` theo định dạng Pixi đọc thẳng, `meta.scale` khớp ảnh. Đã kiểm tra nạp được bằng PixiJS 8.22. `build` và `preview` nhận cả file PNG trong suốt đặt chung thư mục (SVG trùng tên thì SVG thắng).
+- `compose_layered_screen.py` (cần `pillow`, `numpy`, `scipy`): ghép các lớp do mô hình sinh thành một màn slot: tách nền magenta bằng bộ lọc nghiêm ngặt, đặt nền guồng có hoa văn và vạch chia cột, xếp symbol, nhân vật, khung, thanh điều khiển vẽ bằng code. Là bản mẫu để sửa theo game của bạn, đọc `references/style-valkyrie-hacksaw.md` §6 trước.
+- `build_symbol_set.py`: cắt các bảng symbol do mô hình sinh (chữ bài, premium, đặc biệt), vẽ huy hiệu "x5" của Wild và nhãn "SCATTER" bằng code, xuất từng symbol PNG, ảnh tổng hợp và ảnh kiểm tra đọc được ở 96 px (màu và thang xám).
 - `raster_cutout.py`: tách nền cho ảnh raster (màu key hoặc tự dò từ 4 góc, flood-fill từ viền nên màu giống nền nằm bên trong symbol vẫn giữ), làm mềm và khử viền, cắt và căn giữa vào ô vuông. Ví dụ: `python3 skills/casino-symbol-art/scripts/raster_cutout.py art/raw art/svg --cell 512 --key "#ff00ff"`.
 
 **Chọn hướng nào:**
@@ -255,7 +267,10 @@ python3 skills/casino-symbol-art/scripts/svg_to_atlas.py build   art/svg --out p
 | Symbol, icon, khung, kiểu flat hoặc glossy casino | SVG | `SKILL.md` §3, `references/svg-craft.md` |
 | Nền, màn win, loading, key art, art có texture | Raster vẽ bằng code | `references/raster-art.md` |
 | Symbol cao cấp có texture (sơn dầu, mực…) | Raster: tấm trong suốt `sticker.Art` hoặc vẽ trên màu key rồi `raster_cutout.py` | `references/raster-art.md` §3 |
+| Art tranh vẽ chất lượng studio (nền, nhân vật, khung, bộ symbol đầy đủ) | Lớp do mô hình tạo ảnh sinh, ghép bằng code (cần công cụ tạo ảnh và đồng ý chi phí) | `references/style-valkyrie-hacksaw.md` §6 |
 | Art vẽ tay hoặc photoreal | Hoạ sĩ: skill viết brief, pipeline vẫn dùng cho preview và atlas | `references/symbol-design.md` §7 |
+
+Lưu ý khi dùng hướng mô hình sinh: đã chạy thử trọn vẹn một lần (nền, nhân vật, khung, nền guồng, 16 symbol, ghép một màn). Chưa có: art và hoạt ảnh win celebration, giữ phong cách nhất quán giữa nhiều lần gọi bằng ảnh tham chiếu, tách layer nhân vật cho Spine. Phần style Hacksaw trong game dựa trên ảnh bìa và bài viết công khai, vì chưa chơi được bản demo của họ.
 
 Lưu ý khi dùng raster: thư viện vẽ cả cảnh (một ảnh 1080p mất khoảng 10 giây trở lên), không phải công cụ vẽ icon; mỗi bộ symbol chỉ nên dùng một hướng và ghi vào `style.json` (`engine`, `seed`); không vẽ chữ vào nền hoặc title vì cần chữ thật cho đa ngôn ngữ; raster không tách layer cho Spine được. Cảnh ví dụ trong thư viện chỉ để học cách dùng, không dùng làm art cho game.
 
@@ -268,7 +283,7 @@ Luật Stake vẫn áp dụng: art phải độc quyền, không dùng nhân v�
 ```
 1. stake-casino-game-dev  → 3 ý tưởng → chọn 1 → tài liệu thiết kế
 2. stake-casino-game-dev  → code toán học → validate_math.py đạt yêu cầu
-3. casino-symbol-art      → style guide, symbol (SVG hoặc raster), atlas, win title, khung guồng, nền
+3. casino-symbol-art      → style guide, symbol (SVG, raster hoặc lớp do mô hình sinh), atlas, win title, khung guồng, nền
 4. stake-casino-game-dev  → frontend + win celebration + đa ngôn ngữ
 5. casino-audio-design    → định hướng, file âm thanh, AudioManager
 6. casino-game-audit      → audit, sửa lỗi, audit lại
@@ -305,12 +320,14 @@ skills/
 ├── casino-audio-design/SKILL.md
 └── casino-symbol-art/
     ├── SKILL.md
-    ├── scripts/                 svg_to_atlas.py (lint, preview, layers, build), raster_cutout.py
+    ├── scripts/                 svg_to_atlas.py (lint, preview, layers, build), raster_cutout.py,
+    │                            compose_layered_screen.py, build_symbol_set.py
     └── references/
         ├── symbol-design.md     style.json, palette, trạng thái symbol, asset khác, brief hoạ sĩ
         ├── export-and-pixi.md   atlas, tải trong Pixi v8, SymbolView, Spine
         ├── svg-craft.md         hướng SVG: chỗ nào đọc svg-design, chỗ nào ghi đè
         ├── raster-art.md        hướng raster: chọn phong cách, 2 cách làm symbol, ràng buộc
+        ├── style-valkyrie-hacksaw.md  nghiên cứu style Valkyrie/Hacksaw + quy trình lớp do mô hình sinh
         └── vendor/
             ├── svg-design/      hướng dẫn SVG (opendesign, MIT)
             └── claude-drawing/  thư viện vẽ bằng code: lib/ (83 module), examples/ (86 script), docs/ (MIT)
@@ -322,4 +339,5 @@ skills/
 - Hướng dẫn Three.js lấy từ [CloudAI-X/threejs-skills](https://github.com/cloudai-x/threejs-skills), giấy phép MIT, xem `references/threejs/vendor/LICENSE`.
 - Hướng dẫn SVG (`casino-symbol-art/references/vendor/svg-design`) lấy từ [tryopendata/skills](https://github.com/tryopendata/skills), plugin opendesign v1.3.2, giấy phép MIT, xem `LICENSE` trong thư mục đó.
 - Thư viện vẽ bằng code (`casino-symbol-art/references/vendor/claude-drawing`: `lib/`, `examples/*.py`, tài liệu) lấy từ [cloveric/claude-drawing-skill](https://github.com/cloveric/claude-drawing-skill), giấy phép MIT, xem `LICENSE` trong thư mục đó. Không kèm ảnh render mẫu (151 MB). Xem `references/vendor/README.md` để biết đã đổi gì so với bản gốc.
+- `casino-symbol-art/references/style-valkyrie-hacksaw.md` là ghi chép quan sát riêng từ các bản demo công khai (Valkyrie Studio) và ảnh bìa chính thức (Hacksaw Gaming), chỉ rút nguyên tắc và số đo, không sao chép nhân vật hay logo của họ. Dự án này không liên kết với Valkyrie Studio hay Hacksaw Gaming.
 - Hướng dẫn game dev lấy từ [gamedev-skills/awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills), giấy phép Apache-2.0, xem `references/gamedev/vendor/LICENSE` và `NOTICE`.
