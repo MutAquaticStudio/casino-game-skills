@@ -163,4 +163,21 @@ Limits: image models drift between calls (palette, outline weight, light), so co
 needs the same reference image passed to every call plus a rejection loop; transparent
 backgrounds usually need a key colour and a cutout; originality still has to be checked (no
 known characters, no studio logos). Generation costs credits per call: ask before spending.
-Status: this route is specified here but has not been run end to end.
+Status: run end to end once (2026-11-08, original Vietnamese-myth theme, Figma `generate_image`
+with `gpt-image-2.5-flare`, 4 calls, no reference image). Result: backdrop, hero, frame and an
+8-medallion symbol sheet all came out at painted quality in one shot each, and a code-composited
+screen (`scripts/compose_layered_screen.py`) reached Valkyrie-like layout and finish. What was
+learned:
+- Ask for the reel opening and the background of hero/symbols as **flat pure magenta (#FF00FF)**.
+  Key it with a *strict* test (R>175, B>175, G<115, |R-B|<60, plus a 2 px halo only on pinkish
+  pixels). A loose colour-distance key eats lacquer reds/purples and leaves the frame speckled
+  with backdrop colour (first attempt failed this way).
+- One 4×2 sheet of symbols in a single call gave a consistent family (same ring, same light).
+  Split the sheet by connected components after closing small gaps.
+- Request the frame with an **empty magenta window**, then fill that window with a dark tile in
+  code and composite the frame on top of the symbols.
+- Draw by code: bottom bar, balance/win/bet text, spin button. The placeholder spin button in the
+  script is crude; replace it with a generated or hand-built icon.
+- Still open: reference-image conditioning for cross-call consistency (not tried), win
+  celebration art/animation, Spine-ready layer splitting of the hero, multi-theme repeatability.
+- Cost: ~4 generation calls for one screen. Always ask before spending credits.
