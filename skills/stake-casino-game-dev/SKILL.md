@@ -532,7 +532,8 @@ frontend agree.
 - Asset plan: tier title art (or one animated title with variants), particle emitters with
   intensity levels, background dim, a bitmap number font, audio stings per tier (Big Win and
   above) plus a roll-up loop. The art side (asset list per screen, tier escalation rules, file
-  names, hand-off) is in `casino-symbol-art/references/win-celebration-art.md`.
+  names, hand-off) is in `casino-symbol-art/references/win-celebration-art.md`; measured round, win-highlight and bonus-flow timing of a reference game
+  is in `casino-symbol-art/references/animation-timing.md` (a whole round near 1 s, a win highlight about 0.65 s with the HUD updating after it).
 
 ## 9. Localization (multi-language versions)
 

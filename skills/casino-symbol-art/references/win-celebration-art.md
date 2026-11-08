@@ -6,8 +6,9 @@ Status: asset list and rules are specified; **not yet produced end to end**, and
 a live Valkyrie or Hacksaw celebration (their celebrations were not captured, see
 `style-valkyrie-hacksaw.md` §5). Treat the visual direction below as design guidance.
 
-A second capture attempt (2026-11-08) also failed to reach a celebration: 22 base-game spins on Angel of Asgard produced only small wins,
-and the demo's menus (Info, Music, Sound) offered no bonus buy to force a big win. Do not describe Valkyrie's tier screens until a clip exists.
+A longer capture (60 spins of Loki's Vault, 2026-11-08) recorded a small-win highlight, a free-spins bonus and its TOTAL WIN summary (12.9x), but still no
+big-win tier overlay: the 12.9x total was celebrated only by the summary plate. Timing and structure of what WAS recorded is in `animation-timing.md`;
+do not describe the tier screens (Big, Mega, Epic, Max) until a clip of one exists.
 One related observation that is evidenced: inside a game Valkyrie escalates Wild multiplier tiers by hue and finish
 (`style-valkyrie-hacksaw.md` §9), which supports escalating win tiers the same way.
 

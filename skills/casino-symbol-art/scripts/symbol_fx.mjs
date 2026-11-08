@@ -8,6 +8,7 @@ export const ease = {
   linear: (t) => t,
   sine: (t) => 0.5 - 0.5 * Math.cos(Math.PI * t),
   outQuad: (t) => 1 - (1 - t) * (1 - t),
+  inQuad: (t) => t * t,
   outBack: (t) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); },
 };
 export function evalRecipe(r, time) {

@@ -63,8 +63,10 @@ container is a theme choice, `premium_container`: `roundel` (shared round medall
 `scripts/silhouette_check.py` and fix any pair above IoU 0.80 before compositing. The harness
 refuses brand or studio names in the theme.
 
-**Symbol animation in code:** `scripts/symbol_fx.json` + `symbol_fx.mjs` hold idle, land, appear, win, dim and tease recipes as data (no
-Spine needed); `scripts/symbol_fx_preview.py` checks them and renders a demo video. Usage and status: `references/symbol-fx.md`.
+**Symbol animation in code:** `scripts/symbol_fx.json` + `symbol_fx.mjs` hold drop_in, land, win, win_loop, appear, tease (and optional dim, idle) recipes as
+data (no Spine needed); `scripts/symbol_fx_preview.py` checks them and renders a demo video. Usage and status: `references/symbol-fx.md`. The `win` shape,
+the board-cycle timing and the bonus flow come from measuring a reference game's demo: `references/animation-timing.md` (timing and structure to reuse, never their art);
+`scripts/anim_probe.py` repeats that measurement on any demo recording or on our own build.
 
 **Style lock (required for the model-generated route, useful for all):** add a `style_lock` block
 to `style.json` (model, verbatim prompt prefix, key colour, aspect per asset type), paste the

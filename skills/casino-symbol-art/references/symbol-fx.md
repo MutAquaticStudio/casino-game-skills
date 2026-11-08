@@ -3,14 +3,16 @@
 For reel symbols, a few small tweens carry most of the feel. The recipes live as data so a designer can tune them without touching code:
 `scripts/symbol_fx.json` (recipes) and `scripts/symbol_fx.mjs` (a dependency-free evaluator the game calls every frame).
 
-| Recipe | Length | Use |
-|---|---|---|
-| `idle` | 2.8 s loop | slow breathing (scale +1.5 percent, 1.5 px lift); give each symbol a random start offset so the grid does not pulse in sync |
-| `land` | 0.30 s | squash and stretch when a reel stops (1.10 x 0.88, then 0.97 x 1.045, then back to 1) |
-| `appear` | 0.22 s | pop-in for tumbles and cascades (0.6 to 1.08 to 1, fade in) |
-| `win` | 0.72 s loop | pulse to 1.14, small rotation wiggle (+-2 degrees), glow track 0 to 0.9 |
-| `dim` | 0.18 s | the other symbols while a win plays (alpha 0.35, scale 0.96); the game keeps them dimmed until the win ends |
-| `tease` | 0.50 s loop | scatter anticipation (scale 1.10, rotation +-3 degrees, glow) |
+| Recipe | Length | Use | Basis |
+|---|---|---|---|
+| `drop_in` | 0.34 s | a symbol falls into its column; start columns about 0.16 s apart, left to right; follow with `land` | cycle and stagger measured, fall curve authored |
+| `land` | 0.30 s | squash and stretch on landing (1.10 x 0.88, then 0.97 x 1.045, then 1) | authored |
+| `win` | 0.65 s, one shot | flash to an emissive state, ring glow, glint at 0.4 s, fade; tracks `scaleX`, `scaleY`, `glow`, `flash`, `glint`; does not dim the others | shape measured (`animation-timing.md` §2) |
+| `win_loop` | 0.72 s loop | repeating pulse for a highlight that must stay on screen | authored |
+| `appear` | 0.22 s | pop-in for tumbles and cascades | authored |
+| `tease` | 0.50 s loop | scatter anticipation | authored |
+| `dim` | 0.18 s | optional: darken the others when an overlay needs contrast; the reference game does not dim | authored |
+| `idle` | 2.8 s loop | optional: slow breathing; the reference game's resting symbols were still, so skip it by default | authored |
 
 ```ts
 import { evalRecipe } from './symbol_fx.mjs'; import recipes from './symbol_fx.json';
@@ -32,8 +34,8 @@ under 1.0, so a winning symbol does not cover its neighbours (`win` peaks at 1.1
 pass. With a symbol image it renders the six side by side as an mp4.
 
 ## Status and honesty
-- The numbers are authored defaults, **not measured from a studio**. An attempt to measure Valkyrie's symbol win animation from recorded
-  gameplay failed (see `win-celebration-art.md`): the recording had too few wins and the detection was unreliable.
+- `win`, the column stagger and the whole-cycle length come from measurements of one reference game (`animation-timing.md`: 60 spins, 25 fps
+  footage, one game, one session). Everything marked authored in the table is an informed default, not a studio measurement.
 - Not tested inside PixiJS; the evaluator is plain JavaScript and the preview applies the same values with Pillow.
 - Spine is only needed for character-like motion (see the shelved mascot work); symbols rarely need it.
 - Respect reduced-motion settings and Stake's skippable-celebration rule: the loops here are for win highlights, which end when the

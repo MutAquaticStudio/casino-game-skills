@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-REST = {"scaleX": 1.0, "scaleY": 1.0, "alpha": 1.0, "rotation": 0.0, "y": 0.0, "glow": 0.0}
+REST = {"scaleX": 1.0, "scaleY": 1.0, "alpha": 1.0, "rotation": 0.0, "y": 0.0, "glow": 0.0, "flash": 0.0, "glint": 0.0}
 
 
 def sample(name, fps):
@@ -32,7 +32,7 @@ def checks(fill):
         if r["loop"]:
             for k in r["tracks"]:
                 if abs(first[k] - last[k]) > 1e-6: notes.append(f"loop mismatch on {k}"); fails += 1
-        elif name != "dim" and name != "appear":
+        elif name not in ("dim", "appear"):
             for k in r["tracks"]:
                 if abs(last[k] - REST[k]) > 1e-6: notes.append(f"does not end at rest on {k} ({last[k]:.3f})"); fails += 1
         if name == "appear":
@@ -61,6 +61,14 @@ def render(sym, name, fps, cell, loops):
                 a = halo.getchannel("A").point(lambda v: int(v * 0.55 * x["glow"])).filter(ImageFilter.GaussianBlur(max(2, cell * 0.035)))
                 tint = Image.new("RGBA", halo.size, (255, 225, 140, 255)); tint.putalpha(a)
                 im.alpha_composite(tint, ((cell - halo.width) // 2, (cell - halo.height) // 2 - int(x.get("y", 0) * cell / 140)))
+            if x.get("flash", 0) > 0:
+                disc = Image.new("RGBA", (int(cell * 0.62), int(cell * 0.62)), (0, 0, 0, 0)); dd = ImageDraw.Draw(disc)
+                dd.ellipse((0, 0, disc.width - 1, disc.height - 1), fill=(255, 230, 160, int(150 * x["flash"])))
+                disc = disc.filter(ImageFilter.GaussianBlur(cell * 0.03)); im.alpha_composite(disc, ((cell - disc.width) // 2, (cell - disc.height) // 2))
+            if x.get("glint", 0) > 0:
+                g = x["glint"]; L = int(cell * 0.16 * (0.4 + g)); cx, cy = int(cell * 0.62), int(cell * 0.34)
+                gd = ImageDraw.Draw(im); col = (255, 255, 255, int(255 * g))
+                gd.line((cx - L, cy, cx + L, cy), fill=col, width=3); gd.line((cx, cy - L, cx, cy + L), fill=col, width=3)
             if x.get("alpha", 1) < 1:
                 t.putalpha(t.getchannel("A").point(lambda v: int(v * x["alpha"])))
             im.alpha_composite(t, ((cell - t.width) // 2, (cell - t.height) // 2 - int(x.get("y", 0) * cell / 140)))
@@ -75,15 +83,15 @@ def main():
     a = ap.parse_args()
     fails = checks(a.fill)
     if a.symbol:
-        sym = Image.open(a.symbol).convert("RGBA"); names = ["idle", "land", "appear", "win", "dim", "tease"]
-        tracks = [render(sym, n, a.fps, a.cell, 3 if n in ("idle", "win", "tease") else 1) for n in names]
+        sym = Image.open(a.symbol).convert("RGBA"); names = ["drop_in", "land", "win", "win_loop", "appear", "tease"]
+        tracks = [render(sym, n, a.fps, a.cell, 3 if n in ("win_loop", "tease", "win") else 1) for n in names]
         n = max(len(t) for t in tracks); d = 8   # hold the first frame
         sheet = []
         for i in range(n + d):
             row = Image.new("RGBA", (a.cell * len(names), a.cell + 22), (14, 18, 26, 255)); dr = ImageDraw.Draw(row)
             for k, t in enumerate(tracks):
                 fr = t[min(max(i - d // 2, 0), len(t) - 1)] if len(t) else None
-                if len(t) > 1 and tracks[k] is not None and names[k] in ("idle", "win", "tease"): fr = t[(i % len(t))]
+                if len(t) > 1 and tracks[k] is not None and names[k] in ("win_loop", "tease", "win"): fr = t[(i % len(t))]
                 row.alpha_composite(fr, (k * a.cell, 22)); dr.text((k * a.cell + 8, 5), names[k], fill=(255, 220, 120, 255))
             sheet.append(row.convert("RGB"))
         os.makedirs("_fx_frames", exist_ok=True)
