@@ -55,6 +55,14 @@ reuses the same values. Skipping this is the main reason a set looks like five d
 
 Palette starters per theme and a `style.json` template: `references/symbol-design.md` §1.
 
+**Theme harness (model-generated route):** `scripts/art_harness.py theme.json --out art` turns a
+theme (place, hero, 8 premium objects, palette) into `art/style.json` plus one locked prompt per
+layer, with the studio-grade structure built in (presets `valkyrie`, `hacksaw`). Premium symbol
+container is a theme choice, `premium_container`: `roundel` (shared round medallion), `tile`
+(rounded square) or `freeform` (each symbol its own frameless silhouette). For `freeform`, run
+`scripts/silhouette_check.py` and fix any pair above IoU 0.80 before compositing. The harness
+refuses brand or studio names in the theme.
+
 **Style lock (required for the model-generated route, useful for all):** add a `style_lock` block
 to `style.json` (model, verbatim prompt prefix, key colour, aspect per asset type), paste the
 prefix first in every generation prompt, generate anchors first, and run

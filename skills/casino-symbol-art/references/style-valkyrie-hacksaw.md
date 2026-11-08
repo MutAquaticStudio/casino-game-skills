@@ -248,3 +248,27 @@ so the set can be regenerated.
 subjective. A set can pass every metric and still look like two artists. A human review of the
 contact sheet (all assets side by side at real size) stays mandatory. Colour metrics also
 misfire on assets whose job is to differ (rank colour code, scatter glow), hence `exempt`.
+
+## 8. Theme harness and symbol containers
+
+`scripts/art_harness.py` encodes parts 1, 5 and 7 of this study as a generator: the theme supplies
+content, the harness supplies grammar (layers, frame as the darkest element, dark board with faint
+engraving and column grooves, fixed rank colours, framed Wild, round Scatter, magenta key, light
+direction, 70% cool / warm only for value). Tested once on a theme unrelated to the Vietnamese set
+(Egyptian sun temple): backdrop, 8 premiums and hero followed the new theme and the Valkyrie
+structure, and `style_check.py` passed all three. Not tested: frame, board, ranks and specials for
+that theme, the `hacksaw` preset in a real generation, and the `tile` and `freeform` containers in a
+real generation (only the prompts were produced and inspected).
+
+**Which premium container**
+| Container | Use when | Strength | Risk | Check |
+|---|---|---|---|---|
+| `roundel` | many premiums, wants one family at a glance (Loki's Vault style) | easiest consistency | all outlines alike | greyscale strip, object and colour differ |
+| `tile` | gem or item games on a square board (Tome series style) | clean grid, simple cell fit | same as roundel | same |
+| `freeform` | fewer, bolder objects (Tiki Wiki Wild, Waylanders Cup items) | strongest shape reading, more game-like | objects drift in scale and outline, touch or merge when cutting out | `silhouette_check.py`: no pair above IoU 0.80; equal visual size; equal outline weight |
+
+Measured: the eight roundel premiums of the Vietnamese set score IoU about 1.00 against each other
+(shared outline, as designed), while ranks plus specials, which differ by shape, have a median IoU of
+0.65 and no pair above 0.80. Freeform generation itself has not been tried; the prompt asks for
+different silhouettes, equal visual size, equal outline weight and generous spacing so cut-out does
+not merge neighbours, and keeps Wild and Scatter framed so specials stay unmistakable.

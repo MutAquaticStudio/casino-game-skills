@@ -257,6 +257,8 @@ python3 skills/casino-symbol-art/scripts/svg_to_atlas.py build   art/svg --out p
 - `layers`: xuất mỗi `<g id>` cấp cao thành PNG cùng canvas, kèm `layers.json` ghi thứ tự xếp lớp, để đưa vào Spine.
 - `build`: ra `symbols@1x/@2x.json + .png (hoặc .webp)` theo định dạng Pixi đọc thẳng, `meta.scale` khớp ảnh. Đã kiểm tra nạp được bằng PixiJS 8.22. `build` và `preview` nhận cả file PNG trong suốt đặt chung thư mục (SVG trùng tên thì SVG thắng).
 - `compose_layered_screen.py` (cần `pillow`, `numpy`, `scipy`): ghép các lớp do mô hình sinh thành một màn slot: tách nền magenta bằng bộ lọc nghiêm ngặt, đặt nền guồng có hoa văn và vạch chia cột, xếp symbol, nhân vật, khung, thanh điều khiển vẽ bằng code. Là bản mẫu để sửa theo game của bạn, đọc `references/style-valkyrie-hacksaw.md` §6 trước.
+- `art_harness.py`: nhận một file theme (nơi chốn, nhân vật, 8 vật thể premium, bảng màu) và sinh `art/style.json` cùng một prompt khoá cho từng lớp, đã mang sẵn cấu trúc studio lớn (preset `valkyrie` hoặc `hacksaw`). Chọn kiểu symbol premium bằng `premium_container`: `roundel` (huy hiệu tròn), `tile` (ô vuông bo góc) hoặc `freeform` (mỗi symbol là một vật thể tự do, không khung). Từ chối theme có tên hãng hay thương hiệu. Không gọi mô hình, không tốn credit.
+- `silhouette_check.py`: tô đen từng symbol ở kích thước thật và so độ trùng khít hình dáng (IoU) từng cặp. Dùng cho kiểu `freeform`: không cặp nào được vượt 0.80. Với huy hiệu tròn hoặc ô vuông thì điểm cao là bình thường vì cùng một đường viền.
 - `style_check.py` (cần `pillow`, `numpy`, `scipy`): đo độ lệch phong cách của từng asset so với bộ gốc (khoảng cách tới bảng màu, độ sáng, độ bão hoà, tỷ lệ màu ấm, độ sáng viền, hướng sáng), so trong từng nhóm (symbol với symbol, nền với nền). WARN là cần xem lại, FAIL là sinh lại. Đã kiểm tra trên bản lệch cố ý: đổi tông màu bị FAIL, lật hướng sáng và tăng bão hoà bị WARN. Không thấy được hình dáng hay nét vẽ, nên vẫn phải xem contact sheet bằng mắt. Cách dùng và quy trình giữ nhất quán: `references/style-valkyrie-hacksaw.md` §7.
 - `build_symbol_set.py`: cắt các bảng symbol do mô hình sinh (chữ bài, premium, đặc biệt), vẽ huy hiệu "x5" của Wild và nhãn "SCATTER" bằng code, xuất từng symbol PNG, ảnh tổng hợp và ảnh kiểm tra đọc được ở 96 px (màu và thang xám).
 - `raster_cutout.py`: tách nền cho ảnh raster (màu key hoặc tự dò từ 4 góc, flood-fill từ viền nên màu giống nền nằm bên trong symbol vẫn giữ), làm mềm và khử viền, cắt và căn giữa vào ô vuông. Ví dụ: `python3 skills/casino-symbol-art/scripts/raster_cutout.py art/raw art/svg --cell 512 --key "#ff00ff"`.
@@ -331,7 +333,8 @@ skills/
 └── casino-symbol-art/
     ├── SKILL.md
     ├── scripts/                 svg_to_atlas.py (lint, preview, layers, build), raster_cutout.py,
-    │                            compose_layered_screen.py, build_symbol_set.py, style_check.py
+    │                            compose_layered_screen.py, build_symbol_set.py, style_check.py,
+    │                            art_harness.py, silhouette_check.py
     └── references/
         ├── symbol-design.md     style.json, palette, trạng thái symbol, asset khác, brief hoạ sĩ
         ├── export-and-pixi.md   atlas, tải trong Pixi v8, SymbolView, Spine
