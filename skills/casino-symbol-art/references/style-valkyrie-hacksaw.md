@@ -181,6 +181,18 @@ learned:
   dark shadow either side) plus an inner edge vignette. Valkyrie boards are near-black but never
   flat: Loki has an engraved ring, Red Strike a hex pattern, Tome of Hades/Hercules and Waylanders
   Cup have metal or groove dividers between columns. A plain fill (first mockup) reads as unfinished.
+- Full symbol set (2026-11-08, 3 more calls: ranks row, specials row, plus the premium sheet):
+  one row per call keeps a family consistent. Card ranks A/K/Q/J/10 as bevelled lacquer glyphs
+  with a fixed colour per rank worked first time and read clearly at 96 px. Wild (framed glowing
+  tile), Scatter (round mandala) and Bonus (chest) have three different silhouettes. Do the
+  Wild multiplier badge ("x5") and the SCATTER tag **in code** (`scripts/build_symbol_set.py`),
+  never in the prompt, and pad the tile before drawing the badge or it gets clipped.
+  Readability check at 96 px in greyscale: shapes hold, but red Q, teal J and blue 10 converge to
+  similar greys, so rank is told by glyph shape first and colour second; widen the lightness gap
+  between those three if colour must carry the rank.
+  Known artefacts: a stray speck can survive next to a glyph after keying (seen beside Q); clean
+  with a minimum-component-size filter. Rank glyphs touch in a single row, so split the row at
+  the column-count valleys, not by connected components.
 - Draw by code: bottom bar, balance/win/bet text, spin button. The placeholder spin button in the
   script is crude; replace it with a generated or hand-built icon.
 - Still open: reference-image conditioning for cross-call consistency (not tried), win
