@@ -198,3 +198,77 @@ learned:
 - Still open: reference-image conditioning for cross-call consistency (not tried), win
   celebration art/animation, Spine-ready layer splitting of the hero, multi-theme repeatability.
 - Cost: ~4 generation calls for one screen. Always ask before spending credits.
+
+## 7. Keeping one style across many generation calls (consistency protocol)
+
+Image models do not remember a style between calls. Reference-image conditioning was checked
+and is **not available here**: Figma `generate_image` takes no reference image, and the Weave
+route needs the user to link a Figma account first. So consistency comes from a locked prompt
+plus a measured check plus a reject loop. Tested on the Vietnamese-myth set (backdrop, hero, frame,
+board, 16 symbols) and on deliberately drifted copies.
+
+**Step 1: write the style lock once.** Save in `art/style.json` under `style_lock` and paste the
+text **verbatim, first in every prompt**, then add only the asset-specific part after it:
+```json
+"style_lock": {
+  "model": "gpt-image-2.5-flare",
+  "prefix": "Painted semi-realistic fantasy illustration, premium casino-slot quality. Light from the top-left, soft rim light, thin dark outline, one sharp specular highlight. Cool teal-and-navy base (about 70%), warm gold and red only on valuable things. Vietnamese myth motifs: lotus, dragon scales, clouds, lacquer, jade. No text, no logos.",
+  "key": "flat solid pure magenta (#FF00FF) background",
+  "aspect": {"backdrop": "16:9", "sheet": "7:3", "single": "1:1"}
+}
+```
+Rules: same model for the whole set (a model switch changes outline weight and colour grading),
+no synonyms or rewording of the prefix, one asset family per call (a row of ranks, a sheet of
+premiums) so family members share one render, and the same key colour every time.
+
+**Step 2: lock anchors.** Generate the backdrop, the frame and one symbol sheet first, review them
+with the user, and treat them as the anchors. Everything later is judged against these.
+
+**Step 3: measure drift** before compositing:
+```sh
+python3 skills/casino-symbol-art/scripts/style_check.py art/style.json art/layers/*.png --anchors art/layers/backdrop.png art/layers/frame.png art/layers/sym_05.png
+```
+It reports per asset: palette distance to the set palette, lightness, chroma, warm-colour share,
+outline tone and light direction, compared inside groups (symbols with symbols, backgrounds
+with backgrounds; configure `style_check.groups`). WARN means look at it, FAIL means regenerate.
+Checked on drifted copies of a good symbol: a hue-shifted copy FAILed (palette distance 39.5 against
+a 28 tolerance, outline rim lightness 55 against 9), a copy lit from the opposite corner WARNed
+on light direction, an over-saturated copy WARNed on chroma. On the real set it flagged mostly
+intentional exceptions (purple K rank outside the palette, high-chroma A and Q ranks, bright Wild
+and Scatter), which are declared in `style_check.exempt` so they stop reporting; treat each remaining
+WARN as a prompt to look, not a defect.
+
+**Step 4: reject loop.** Max three regenerations per asset, each time adding one corrective
+sentence after the lock ("keep the outline thin and dark", "less saturated"), never editing the
+lock. If an asset still fails, keep the closest one and fix it in code (levels, hue shift, outline
+pass) rather than spending more credits. Record the final prompt text in `art/prompts/<asset>.txt`
+so the set can be regenerated.
+
+**What the check cannot see:** shape language, line quality, character likeness, and anything
+subjective. A set can pass every metric and still look like two artists. A human review of the
+contact sheet (all assets side by side at real size) stays mandatory. Colour metrics also
+misfire on assets whose job is to differ (rank colour code, scatter glow), hence `exempt`.
+
+## 8. Theme harness and symbol containers
+
+`scripts/art_harness.py` encodes parts 1, 5 and 7 of this study as a generator: the theme supplies
+content, the harness supplies grammar (layers, frame as the darkest element, dark board with faint
+engraving and column grooves, fixed rank colours, framed Wild, round Scatter, magenta key, light
+direction, 70% cool / warm only for value). Tested once on a theme unrelated to the Vietnamese set
+(Egyptian sun temple): backdrop, 8 premiums and hero followed the new theme and the Valkyrie
+structure, and `style_check.py` passed all three. Not tested: frame, board, ranks and specials for
+that theme, the `hacksaw` preset in a real generation, and the `tile` and `freeform` containers in a
+real generation (only the prompts were produced and inspected).
+
+**Which premium container**
+| Container | Use when | Strength | Risk | Check |
+|---|---|---|---|---|
+| `roundel` | many premiums, wants one family at a glance (Loki's Vault style) | easiest consistency | all outlines alike | greyscale strip, object and colour differ |
+| `tile` | gem or item games on a square board (Tome series style) | clean grid, simple cell fit | same as roundel | same |
+| `freeform` | fewer, bolder objects (Tiki Wiki Wild, Waylanders Cup items) | strongest shape reading, more game-like | objects drift in scale and outline, touch or merge when cutting out | `silhouette_check.py`: no pair above IoU 0.80; equal visual size; equal outline weight |
+
+Measured: the eight roundel premiums of the Vietnamese set score IoU about 1.00 against each other
+(shared outline, as designed), while ranks plus specials, which differ by shape, have a median IoU of
+0.65 and no pair above 0.80. Freeform generation itself has not been tried; the prompt asks for
+different silhouettes, equal visual size, equal outline weight and generous spacing so cut-out does
+not merge neighbours, and keeps Wild and Scatter framed so specials stay unmistakable.
