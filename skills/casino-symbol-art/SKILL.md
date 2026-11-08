@@ -55,6 +55,12 @@ reuses the same values. Skipping this is the main reason a set looks like five d
 
 Palette starters per theme and a `style.json` template: `references/symbol-design.md` §1.
 
+**Style lock (required for the model-generated route, useful for all):** add a `style_lock` block
+to `style.json` (model, verbatim prompt prefix, key colour, aspect per asset type), paste the
+prefix first in every generation prompt, generate anchors first, and run
+`scripts/style_check.py` before compositing. Protocol and measured results:
+`references/style-valkyrie-hacksaw.md` §7.
+
 ## 2. Plan the set
 List every asset with its role before drawing. Role sets the detail level and the visual weight.
 
@@ -142,17 +148,21 @@ Same loop (style guide → SVG or raster → preview → export), different canv
 are in `references/symbol-design.md` §6:
 reel frame and board (9-slice friendly), background (≥ 2 parallax layers, kept calm behind the
 reels), win-tier title art (Big / Mega / Epic / Legendary / Max Win, from `stake-casino-game-dev`
-§8), HUD icons (follow the simplicity-first rule in §13.0 there), loading logo, thumbnail.
+§8; asset list and style rules in `references/win-celebration-art.md`), HUD icons (follow the simplicity-first rule in §13.0 there), loading logo, thumbnail.
 
 ## 7. Hand-off
-Deliver the folder, not loose files: `art/style.json`, `art/svg/` (SVG and any PNG symbols),
-`art/preview.png`,
+Deliver the folder, not loose files: `art/style.json` (with `style_lock` for generated sets),
+`art/prompts/` (final prompt per generated asset), `art/svg/` (SVG and any PNG symbols),
+`art/preview.png`, the `style_check.py` report,
 `public/assets/symbols*.{json,png|webp}`. Give two or three sentences: what was made, anything
 that needs a decision (a symbol that fails the greyscale test, an atlas near the budget), and
 one next step (animation pass, win title art, or running `casino-game-audit` on a build).
 
 ## Pitfalls
 - No style guide, so the set drifts. Fix by writing `style.json` first.
+- Generated set drifts between calls (palette, outline weight, light direction). Do not reword
+  the prompt per asset: reuse `style_lock.prefix` verbatim, one family per call, same model,
+  then run `style_check.py` and reject FAILs (max three regenerations, then fix in code).
 - Judging symbols at 256px on a big monitor; they fail at 140px on a phone. Always view the
   shrink strip.
 - Glow or shadow outside the viewBox gets cut. Pad the canvas.

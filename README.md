@@ -257,6 +257,7 @@ python3 skills/casino-symbol-art/scripts/svg_to_atlas.py build   art/svg --out p
 - `layers`: xuất mỗi `<g id>` cấp cao thành PNG cùng canvas, kèm `layers.json` ghi thứ tự xếp lớp, để đưa vào Spine.
 - `build`: ra `symbols@1x/@2x.json + .png (hoặc .webp)` theo định dạng Pixi đọc thẳng, `meta.scale` khớp ảnh. Đã kiểm tra nạp được bằng PixiJS 8.22. `build` và `preview` nhận cả file PNG trong suốt đặt chung thư mục (SVG trùng tên thì SVG thắng).
 - `compose_layered_screen.py` (cần `pillow`, `numpy`, `scipy`): ghép các lớp do mô hình sinh thành một màn slot: tách nền magenta bằng bộ lọc nghiêm ngặt, đặt nền guồng có hoa văn và vạch chia cột, xếp symbol, nhân vật, khung, thanh điều khiển vẽ bằng code. Là bản mẫu để sửa theo game của bạn, đọc `references/style-valkyrie-hacksaw.md` §6 trước.
+- `style_check.py` (cần `pillow`, `numpy`, `scipy`): đo độ lệch phong cách của từng asset so với bộ gốc (khoảng cách tới bảng màu, độ sáng, độ bão hoà, tỷ lệ màu ấm, độ sáng viền, hướng sáng), so trong từng nhóm (symbol với symbol, nền với nền). WARN là cần xem lại, FAIL là sinh lại. Đã kiểm tra trên bản lệch cố ý: đổi tông màu bị FAIL, lật hướng sáng và tăng bão hoà bị WARN. Không thấy được hình dáng hay nét vẽ, nên vẫn phải xem contact sheet bằng mắt. Cách dùng và quy trình giữ nhất quán: `references/style-valkyrie-hacksaw.md` §7.
 - `build_symbol_set.py`: cắt các bảng symbol do mô hình sinh (chữ bài, premium, đặc biệt), vẽ huy hiệu "x5" của Wild và nhãn "SCATTER" bằng code, xuất từng symbol PNG, ảnh tổng hợp và ảnh kiểm tra đọc được ở 96 px (màu và thang xám).
 - `raster_cutout.py`: tách nền cho ảnh raster (màu key hoặc tự dò từ 4 góc, flood-fill từ viền nên màu giống nền nằm bên trong symbol vẫn giữ), làm mềm và khử viền, cắt và căn giữa vào ô vuông. Ví dụ: `python3 skills/casino-symbol-art/scripts/raster_cutout.py art/raw art/svg --cell 512 --key "#ff00ff"`.
 
@@ -270,7 +271,11 @@ python3 skills/casino-symbol-art/scripts/svg_to_atlas.py build   art/svg --out p
 | Art tranh vẽ chất lượng studio (nền, nhân vật, khung, bộ symbol đầy đủ) | Lớp do mô hình tạo ảnh sinh, ghép bằng code (cần công cụ tạo ảnh và đồng ý chi phí) | `references/style-valkyrie-hacksaw.md` §6 |
 | Art vẽ tay hoặc photoreal | Hoạ sĩ: skill viết brief, pipeline vẫn dùng cho preview và atlas | `references/symbol-design.md` §7 |
 
-Lưu ý khi dùng hướng mô hình sinh: đã chạy thử trọn vẹn một lần (nền, nhân vật, khung, nền guồng, 16 symbol, ghép một màn). Chưa có: art và hoạt ảnh win celebration, giữ phong cách nhất quán giữa nhiều lần gọi bằng ảnh tham chiếu, tách layer nhân vật cho Spine. Phần style Hacksaw trong game dựa trên ảnh bìa và bài viết công khai, vì chưa chơi được bản demo của họ.
+**Giữ phong cách nhất quán giữa nhiều lần gọi:** mô hình ảnh không nhớ phong cách giữa các lần gọi, và không có đường dùng ảnh tham chiếu (Figma `generate_image` không nhận ảnh tham chiếu, Weave cần liên kết tài khoản Figma trước). Vì vậy skill dùng: khối `style_lock` khoá cứng dán nguyên văn ở đầu mọi prompt, cùng một mô hình cho cả bộ, mỗi lần gọi một họ asset, sinh bộ neo trước, đo bằng `style_check.py`, sinh lại tối đa 3 lần rồi sửa bằng code. Lưu prompt cuối cùng vào `art/prompts/`.
+
+Art cho win celebration: danh sách asset theo từng màn, quy tắc leo thang theo cấp (bằng tỷ lệ màu ấm và kích thước, không đổi style), đặt tên file và bàn giao nằm ở `references/win-celebration-art.md`. Đây là đặc tả, chưa sản xuất thử.
+
+Lưu ý khi dùng hướng mô hình sinh: đã chạy thử trọn vẹn một lần (nền, nhân vật, khung, nền guồng, 16 symbol, ghép một màn). Chưa có: hoạt ảnh win celebration, tách layer nhân vật cho Spine. Phần style Hacksaw trong game dựa trên ảnh bìa và bài viết công khai, vì chưa chơi được bản demo của họ.
 
 Lưu ý khi dùng raster: thư viện vẽ cả cảnh (một ảnh 1080p mất khoảng 10 giây trở lên), không phải công cụ vẽ icon; mỗi bộ symbol chỉ nên dùng một hướng và ghi vào `style.json` (`engine`, `seed`); không vẽ chữ vào nền hoặc title vì cần chữ thật cho đa ngôn ngữ; raster không tách layer cho Spine được. Cảnh ví dụ trong thư viện chỉ để học cách dùng, không dùng làm art cho game.
 
@@ -280,15 +285,20 @@ Luật Stake vẫn áp dụng: art phải độc quyền, không dùng nhân v�
 
 ## 7. Quy trình gợi ý từ đầu đến cuối
 
-```
-1. stake-casino-game-dev  → 3 ý tưởng → chọn 1 → tài liệu thiết kế
-2. stake-casino-game-dev  → code toán học → validate_math.py đạt yêu cầu
-3. casino-symbol-art      → style guide, symbol (SVG, raster hoặc lớp do mô hình sinh), atlas, win title, khung guồng, nền
-4. stake-casino-game-dev  → frontend + win celebration + đa ngôn ngữ
-5. casino-audio-design    → định hướng, file âm thanh, AudioManager
-6. casino-game-audit      → audit, sửa lỗi, audit lại
-7. stake-casino-game-dev  → check_social_terms + check_static_build → checklist nộp duyệt
-```
+Mỗi bước nhận đầu ra của bước trước và có một cổng kiểm tra trước khi sang bước sau. Bảng đầy đủ nằm ở mục "Workflow map" trong `skills/stake-casino-game-dev/SKILL.md`.
+
+| Bước | Skill | Nhận | Tạo ra | Cổng kiểm tra |
+|---|---|---|---|---|
+| 1. Ý tưởng | `stake-casino-game-dev` (§7) | ý tưởng hoặc brief | tài liệu thiết kế: tầng cơ chế, bậc thang mode, danh sách event, chủ đề, lưới, RTP/wincap | qua kiểm tra luật (§2); mode đã chốt vì không thêm được sau duyệt |
+| 2. Toán học | `stake-casino-game-dev` (Phase 2) | tài liệu thiết kế | game_config, books, lookup table, `winLevel` | `validate_math.py` sạch |
+| 3. Art | `casino-symbol-art` | chủ đề, danh sách mode, kích thước symbol thật | `art/style.json` (có `style_lock`), atlas symbol, khung, nền guồng, nền, art win và chuyển cảnh | `style_check.py` không FAIL; test thu nhỏ và thang xám; art gốc |
+| 4. Frontend | `stake-casino-game-dev` (Phase 3) | books, atlas, danh sách event | bản build tĩnh nối RGS, HUD, win celebration, đa ngôn ngữ | `check_static_build.py` sạch; mọi loại event đều có handler |
+| 5. Âm thanh | `casino-audio-design` | danh sách event, bảng cấp win | file âm thanh + AudioManager | bảng event → âm thanh đầy đủ |
+| 6. Kiểm thử tích hợp | `stake-casino-game-dev` (Phase 4) | bản build | kết quả test tiền tệ, mode, kích thước | 10 lần thắng mỗi mode khớp RGS |
+| 7. Audit | `casino-game-audit` | build hoặc ảnh chụp | báo cáo chấm điểm | không còn lỗi chặn; mảng Graphics & art direction ≥ 4 |
+| 8. Nộp duyệt | `stake-casino-game-dev` (Phase 5) | bản build đã audit | event ID replay, tile, hồ sơ nộp | checklist Stake đủ ✅ |
+
+Nếu một bước phát hiện lỗi thuộc về bước trước (ví dụ cấp win thiếu art, symbol không đọc được ở popout), quay lại bước đó và chạy lại cổng của nó, không vá lỗi ở bước sau.
 
 ---
 
@@ -321,13 +331,14 @@ skills/
 └── casino-symbol-art/
     ├── SKILL.md
     ├── scripts/                 svg_to_atlas.py (lint, preview, layers, build), raster_cutout.py,
-    │                            compose_layered_screen.py, build_symbol_set.py
+    │                            compose_layered_screen.py, build_symbol_set.py, style_check.py
     └── references/
         ├── symbol-design.md     style.json, palette, trạng thái symbol, asset khác, brief hoạ sĩ
         ├── export-and-pixi.md   atlas, tải trong Pixi v8, SymbolView, Spine
         ├── svg-craft.md         hướng SVG: chỗ nào đọc svg-design, chỗ nào ghi đè
         ├── raster-art.md        hướng raster: chọn phong cách, 2 cách làm symbol, ràng buộc
-        ├── style-valkyrie-hacksaw.md  nghiên cứu style Valkyrie/Hacksaw + quy trình lớp do mô hình sinh
+        ├── style-valkyrie-hacksaw.md  nghiên cứu style Valkyrie/Hacksaw, quy trình lớp do mô hình sinh, giao thức giữ nhất quán
+        ├── win-celebration-art.md     asset art cho win celebration, quy tắc leo thang theo cấp, bàn giao
         └── vendor/
             ├── svg-design/      hướng dẫn SVG (opendesign, MIT)
             └── claude-drawing/  thư viện vẽ bằng code: lib/ (83 module), examples/ (86 script), docs/ (MIT)

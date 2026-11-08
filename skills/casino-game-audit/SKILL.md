@@ -29,7 +29,10 @@ Look at the screenshots yourself (open the images) rather than guessing from cod
 
 ### A. Graphics & art direction
 - One coherent style: same light direction, outline weight, palette and rendering style across
-  symbols, background, UI and popups. Mixed styles look cheap.
+  symbols, background, UI and popups. Mixed styles look cheap. When the layers are available,
+  run `casino-symbol-art/scripts/style_check.py` and report FAIL/WARN rows; from screenshots only,
+  compare a contact sheet of symbol, frame, backdrop and win title side by side. Metrics miss shape
+  language and line quality, so always add your own judgement.
 - Symbol hierarchy: high/low/special symbols readable at a glance by shape and colour;
   distinguishable for colour-blind players (test with a deuteranopia filter).
 - Symbols fill their cells consistently; none blurry or upscaled.

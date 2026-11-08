@@ -45,6 +45,21 @@ Consequences:
 
 ## 3. Workflow
 
+### Workflow map (what each step hands to the next)
+| Step | Skill | Needs | Produces | Gate before moving on |
+|---|---|---|---|---|
+| 1 Concept | this skill, §7 | idea or brief | concept doc: depth stack, mode ladder, event list, theme, grid, target RTP/wincap | §2 screen passed; mode ladder final (no modes can be added after approval) |
+| 2 Math | this skill, Phase 2 | concept doc | game_config.py, books, lookup tables, `winLevel` per outcome | `validate_math.py` clean |
+| 3 Art | `casino-symbol-art` | concept theme + mode list + real symbol size | `art/style.json` (with `style_lock`), symbol atlas, frame, board, backdrop, win/transition art | `style_check.py` no FAIL; shrink and greyscale tests; originality |
+| 4 Frontend | this skill, Phase 3, §12–13 | books, atlas, event list | static build wired to RGS, HUD, win celebration, locales | check_static_build.py clean; every book event type has a handler |
+| 5 Audio | `casino-audio-design` | event list, tier table | audio files + AudioManager | event → sound table complete |
+| 6 Integration | this skill, Phase 4 | build | test results across currencies, modes, sizes | 10 wins per mode match RGS payout |
+| 7 Audit | `casino-game-audit` | build or screenshots | scored report | no blockers; Graphics & art direction (area A) ≥ 4 |
+| 8 Submit | this skill, Phase 5 | audited build | replay IDs, tile, submission | Stake checklist all ✅ |
+Handoff files travel with the project: concept doc → `art/style.json` + event list → atlas and win
+art → build. If a later step finds a problem owned by an earlier one (e.g. a tier with no art, a
+symbol unreadable at popout size), go back to that step and re-run its gate, do not patch around it.
+
 ### Phase 1 – Concept & compliance pre-check
 Design the concept with §7 (depth stack, full mode ladder, engagement beats, responsible-design
 check) – never stop at "spin → line win → done". Then pin down grid, theme, target RTP
@@ -516,7 +531,8 @@ frontend agree.
   long strings (e.g. "¥150,000,000") and every shipped language.
 - Asset plan: tier title art (or one animated title with variants), particle emitters with
   intensity levels, background dim, a bitmap number font, audio stings per tier (Big Win and
-  above) plus a roll-up loop.
+  above) plus a roll-up loop. The art side (asset list per screen, tier escalation rules, file
+  names, hand-off) is in `casino-symbol-art/references/win-celebration-art.md`.
 
 ## 9. Localization (multi-language versions)
 
