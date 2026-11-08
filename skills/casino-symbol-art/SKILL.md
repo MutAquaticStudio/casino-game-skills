@@ -67,7 +67,8 @@ refuses brand or studio names in the theme.
 (head, shoulders, elbows, held item, hair, pet, hem, feet) from one cut-out hero image plus a small part
 spec, and proves each joint with `spine_preview.py --joint-sheet`. `scripts/spine_idle_rig.py` is the quick
 single-mesh version; it stretches the art and has no real joints. Neither does blinking or fingers; those need
-parts painted or generated separately. Capabilities, limits and Pixi wiring: `references/mascot-animation.md`.
+parts painted or generated separately. Run `scripts/rig_audit.py` on every rig before use: it measures mesh distortion and physics
+behaviour with the official runtime. Capabilities, limits and Pixi wiring: `references/mascot-animation.md`.
 
 **Style lock (required for the model-generated route, useful for all):** add a `style_lock` block
 to `style.json` (model, verbatim prompt prefix, key colour, aspect per asset type), paste the
