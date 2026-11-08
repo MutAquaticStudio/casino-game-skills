@@ -63,6 +63,11 @@ container is a theme choice, `premium_container`: `roundel` (shared round medall
 `scripts/silhouette_check.py` and fix any pair above IoU 0.80 before compositing. The harness
 refuses brand or studio names in the theme.
 
+**Symbol animation in code:** `scripts/symbol_fx.json` + `symbol_fx.mjs` hold drop_in, land, win, win_loop, appear, tease (and optional dim, idle) recipes as
+data (no Spine needed); `scripts/symbol_fx_preview.py` checks them and renders a demo video. Usage and status: `references/symbol-fx.md`. The `win` shape,
+the board-cycle timing and the bonus flow come from measuring a reference game's demo: `references/animation-timing.md` (timing and structure to reuse, never their art);
+`scripts/anim_probe.py` repeats that measurement on any demo recording or on our own build.
+
 **Style lock (required for the model-generated route, useful for all):** add a `style_lock` block
 to `style.json` (model, verbatim prompt prefix, key colour, aspect per asset type), paste the
 prefix first in every generation prompt, generate anchors first, and run
@@ -81,9 +86,11 @@ List every asset with its role before drawing. Role sets the detail level and th
 | Specials from the concept (multiplier, coin, mystery) | per design | Follow the mechanic; show its value legibly |
 
 Every symbol needs the states the Pixi `SymbolView` uses (`idle | spin | land | win | dim`,
-see `stake-casino-game-dev` §12.3). Most states are code (blur, scale, tint, glow); draw extra
-art only for `win` when the symbol needs a real animation. Details and timings:
-`references/symbol-design.md` §4.
+see `stake-casino-game-dev` §12.3). Most states are code (blur, scale, tint, glow). **Win-state art (deliverable):**
+the `win` recipe (`scripts/symbol_fx.json`, shape measured in `references/animation-timing.md`) needs three shared sprites that match the set's style:
+a **flash disc** (soft bright circle), a **glow ring** and a **glint** (small star sparkle); premium symbols may also get a "lit" variant (brighter, more saturated, the
+glass-like glow state). Everything else (drop in, land, scale, timing) is code. Do not draw dim or idle variants unless the design asks for them. Details and timings:
+`references/symbol-design.md` §4; round timing and rules: `stake-casino-game-dev` §8.5.
 
 ## 3. Draw each symbol as SVG
 One file per asset, `art/svg/<name>.svg`:
@@ -156,10 +163,11 @@ Same loop (style guide → SVG or raster → preview → export), different canv
 are in `references/symbol-design.md` §6:
 reel frame and board (9-slice friendly), background (≥ 2 parallax layers, kept calm behind the
 reels), win-tier title art (Big / Mega / Epic / Legendary / Max Win, from `stake-casino-game-dev`
-§8; asset list and style rules in `references/win-celebration-art.md`), HUD icons (follow the simplicity-first rule in §13.0 there), loading logo, thumbnail.
+§8; asset list and style rules in `references/win-celebration-art.md`), HUD icons (follow the simplicity-first rule in §13.0 there), loading logo, thumbnail (tile: `references/tile-thumbnail.md`, check with `scripts/tile_check.py`).
 
 ## 7. Hand-off
-Deliver the folder, not loose files: `art/style.json` (with `style_lock` for generated sets),
+Deliver the folder, not loose files: `art/motion.json` (a copy of `scripts/symbol_fx.json`, tuned; the round controller reads it), `art/fx/` (`flash_disc`, `glow_ring`,
+`glint` sprites, plus premium "lit" variants), `art/style.json` (with `style_lock` for generated sets),
 `art/prompts/` (final prompt per generated asset), `art/svg/` (SVG and any PNG symbols),
 `art/preview.png`, the `style_check.py` report,
 `public/assets/symbols*.{json,png|webp}`. Give two or three sentences: what was made, anything

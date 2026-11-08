@@ -254,11 +254,19 @@ misfire on assets whose job is to differ (rank colour code, scatter glow), hence
 `scripts/art_harness.py` encodes parts 1, 5 and 7 of this study as a generator: the theme supplies
 content, the harness supplies grammar (layers, frame as the darkest element, dark board with faint
 engraving and column grooves, fixed rank colours, framed Wild, round Scatter, magenta key, light
-direction, 70% cool / warm only for value). Tested once on a theme unrelated to the Vietnamese set
-(Egyptian sun temple): backdrop, 8 premiums and hero followed the new theme and the Valkyrie
-structure, and `style_check.py` passed all three. Not tested: frame, board, ranks and specials for
-that theme, the `hacksaw` preset in a real generation, and the `tile` and `freeform` containers in a
-real generation (only the prompts were produced and inspected).
+direction, 70% cool / warm only for value). Tested on a theme unrelated to the Vietnamese set (Egyptian sun temple). Valkyrie preset: backdrop, 8 roundel premiums and hero followed the
+new theme and the Valkyrie structure, and `style_check.py` passed all three. Second round (same theme, 3 more generations): the
+`freeform` container for both presets and the `hacksaw` hero. Results:
+- `freeform` worked in both presets: 8 separate frameless objects per sheet, no frame, ring or plate, nothing touching, and the
+  sheet split into exactly 8 objects by connected components. `silhouette_check.py`: no pair above IoU 0.80 (median 0.53 Valkyrie, 0.55
+  Hacksaw; closest pairs 0.74 and 0.77, e.g. canopic jar against cobra crown).
+- Not obeyed: "equal visual size". Object heights spread 271 to 400 px (about +-19 percent) and widths 193 to 345 px. Normalise each
+  symbol to a common bounding box after cut-out (fit the longer side), or the grid looks uneven. The 4x2 spacing prompt was enough for clean separation.
+- The `hacksaw` preset changed the rendering as intended: flat shaded shapes, thick dark outlines, an expressive stylised hero and
+  symbols, against the painted semi-realistic look of the Valkyrie preset, on the same theme and palette words. It is a different
+  house style, not a recolour, so one game uses one preset.
+- Still not tested: frame, board, ranks and specials for the Hacksaw preset, the `tile` symbol container, the tile layers below, and a
+  second Valkyrie-preset theme end to end.
 
 **Which premium container**
 | Container | Use when | Strength | Risk | Check |
@@ -269,6 +277,16 @@ real generation (only the prompts were produced and inspected).
 
 Measured: the eight roundel premiums of the Vietnamese set score IoU about 1.00 against each other
 (shared outline, as designed), while ranks plus specials, which differ by shape, have a median IoU of
-0.65 and no pair above 0.80. Freeform generation itself has not been tried; the prompt asks for
-different silhouettes, equal visual size, equal outline weight and generous spacing so cut-out does
+0.65 and no pair above 0.80. The freeform prompt asks for different silhouettes, equal visual size, equal outline weight and generous spacing so cut-out does
 not merge neighbours, and keeps Wild and Scatter framed so specials stay unmistakable.
+
+## 9. More observed details (Angel of Asgard demo, 2026-11-08)
+- **Wild multiplier tiers are colour-coded and escalate by hue and finish:** x3 yellow-gold, x5 / x10 / x15 ice-blue (cyan), x50 red and
+  x50 purple, x1000 pale white-gold; each tile is a carved stone mask framed with a coloured glow, the multiplier number in large
+  bevelled numerals on the face, the word WILD on the lower edge. Scatter and Super Scatter are labelled with a text tag on the symbol.
+- **Rank colour codes are fixed per game, not across games:** in Angel of Asgard 10 is blue with an orange edge, J teal, Q green, K red,
+  A purple; in Loki's Vault A gold, K purple, Q red, J ice-blue. Choose one mapping per game and keep it.
+- The info panel (hamburger menu: Info, Music, Sound; no bonus-buy entry was found in the demo menu) shows every symbol and wild tier in one screen,
+  a useful reference layout for a game's paytable art.
+- Hero animation: during windows where the reels were static (only 8 one-second windows in the recording) the pixels around the hero changed
+  about 5 to 12 times more than the backdrop (median 0.3 against 0.06, mean 0.73), so an idle exists, but the sample is small.

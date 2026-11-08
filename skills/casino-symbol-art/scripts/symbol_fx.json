@@ -1,0 +1,571 @@
+{
+ "_doc": "Symbol animation recipes as data. Times in seconds, scale and alpha unitless, rotation in degrees, y in px at 140 px symbol size (scale by size/140). Each key: [t, value, ease]; ease applies to the segment that ENDS at that key. Looping recipes must start and end on the same value. `win`, `drop_in` and the board cycle follow what was measured in a reference game (references/animation-timing.md); the rest are authored defaults.",
+ "drop_in": {
+  "_note": "Authored fall for a symbol entering its column (the reference game drops whole columns in from above, left to right, 0.16 s apart; fall time per column about 0.25 to 0.45 s, read from frames). Follow with `land`.",
+  "loop": false,
+  "duration": 0.34,
+  "tracks": {
+   "y": [
+    [
+     0,
+     -300,
+     "linear"
+    ],
+    [
+     0.26,
+     0,
+     "inQuad"
+    ],
+    [
+     0.34,
+     0,
+     "linear"
+    ]
+   ]
+  }
+ },
+ "land": {
+  "loop": false,
+  "duration": 0.3,
+  "tracks": {
+   "scaleX": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     0.07,
+     1.1,
+     "outQuad"
+    ],
+    [
+     0.16,
+     0.97,
+     "sine"
+    ],
+    [
+     0.24,
+     1.015,
+     "sine"
+    ],
+    [
+     0.3,
+     1,
+     "sine"
+    ]
+   ],
+   "scaleY": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     0.07,
+     0.88,
+     "outQuad"
+    ],
+    [
+     0.16,
+     1.045,
+     "sine"
+    ],
+    [
+     0.24,
+     0.99,
+     "sine"
+    ],
+    [
+     0.3,
+     1,
+     "sine"
+    ]
+   ]
+  }
+ },
+ "win": {
+  "_note": "MEASURED shape (reference game, small win, 25 fps footage, +-40 ms): the winning symbol flashes into an emissive disc (0 to 0.16 s), settles into a glowing glass-like state with a ring glow (0.16 to 0.40 s), a small glint at about 0.4 s, glow fades out by about 0.65 s. One shot, no loop, no dimming of others. `flash` is an overlay (additive disc) alpha, `glint` a star sprite alpha.",
+  "loop": false,
+  "duration": 0.65,
+  "tracks": {
+   "scaleX": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     0.08,
+     1.12,
+     "outQuad"
+    ],
+    [
+     0.4,
+     1.08,
+     "sine"
+    ],
+    [
+     0.65,
+     1,
+     "sine"
+    ]
+   ],
+   "scaleY": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     0.08,
+     1.12,
+     "outQuad"
+    ],
+    [
+     0.4,
+     1.08,
+     "sine"
+    ],
+    [
+     0.65,
+     1,
+     "sine"
+    ]
+   ],
+   "glow": [
+    [
+     0,
+     0,
+     "linear"
+    ],
+    [
+     0.04,
+     1,
+     "outQuad"
+    ],
+    [
+     0.16,
+     0.95,
+     "linear"
+    ],
+    [
+     0.4,
+     0.55,
+     "sine"
+    ],
+    [
+     0.65,
+     0,
+     "sine"
+    ]
+   ],
+   "flash": [
+    [
+     0,
+     0,
+     "linear"
+    ],
+    [
+     0.04,
+     1,
+     "outQuad"
+    ],
+    [
+     0.16,
+     0.7,
+     "linear"
+    ],
+    [
+     0.24,
+     0,
+     "outQuad"
+    ],
+    [
+     0.65,
+     0,
+     "linear"
+    ]
+   ],
+   "glint": [
+    [
+     0,
+     0,
+     "linear"
+    ],
+    [
+     0.36,
+     0,
+     "linear"
+    ],
+    [
+     0.42,
+     1,
+     "outQuad"
+    ],
+    [
+     0.52,
+     0,
+     "outQuad"
+    ],
+    [
+     0.65,
+     0,
+     "linear"
+    ]
+   ]
+  }
+ },
+ "win_loop": {
+  "loop": true,
+  "duration": 0.72,
+  "tracks": {
+   "scaleX": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     0.18,
+     1.14,
+     "outBack"
+    ],
+    [
+     0.36,
+     1.05,
+     "sine"
+    ],
+    [
+     0.54,
+     1.12,
+     "sine"
+    ],
+    [
+     0.72,
+     1,
+     "sine"
+    ]
+   ],
+   "scaleY": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     0.18,
+     1.14,
+     "outBack"
+    ],
+    [
+     0.36,
+     1.05,
+     "sine"
+    ],
+    [
+     0.54,
+     1.12,
+     "sine"
+    ],
+    [
+     0.72,
+     1,
+     "sine"
+    ]
+   ],
+   "rotation": [
+    [
+     0,
+     0,
+     "linear"
+    ],
+    [
+     0.18,
+     -2,
+     "sine"
+    ],
+    [
+     0.36,
+     2,
+     "sine"
+    ],
+    [
+     0.54,
+     -1,
+     "sine"
+    ],
+    [
+     0.72,
+     0,
+     "sine"
+    ]
+   ],
+   "glow": [
+    [
+     0,
+     0,
+     "linear"
+    ],
+    [
+     0.18,
+     0.9,
+     "outQuad"
+    ],
+    [
+     0.36,
+     0.4,
+     "sine"
+    ],
+    [
+     0.54,
+     0.8,
+     "sine"
+    ],
+    [
+     0.72,
+     0,
+     "sine"
+    ]
+   ]
+  },
+  "_note": "Looping pulse (authored). Use for long or repeated highlights such as a feature that stays on screen; the measured single-win highlight is `win`."
+ },
+ "appear": {
+  "loop": false,
+  "duration": 0.22,
+  "tracks": {
+   "scaleX": [
+    [
+     0,
+     0.6,
+     "linear"
+    ],
+    [
+     0.14,
+     1.08,
+     "outQuad"
+    ],
+    [
+     0.22,
+     1,
+     "sine"
+    ]
+   ],
+   "scaleY": [
+    [
+     0,
+     0.6,
+     "linear"
+    ],
+    [
+     0.14,
+     1.08,
+     "outQuad"
+    ],
+    [
+     0.22,
+     1,
+     "sine"
+    ]
+   ],
+   "alpha": [
+    [
+     0,
+     0,
+     "linear"
+    ],
+    [
+     0.1,
+     1,
+     "outQuad"
+    ],
+    [
+     0.22,
+     1,
+     "linear"
+    ]
+   ]
+  }
+ },
+ "dim": {
+  "loop": false,
+  "duration": 0.18,
+  "tracks": {
+   "alpha": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     0.18,
+     0.35,
+     "outQuad"
+    ]
+   ],
+   "scaleX": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     0.18,
+     0.96,
+     "outQuad"
+    ]
+   ],
+   "scaleY": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     0.18,
+     0.96,
+     "outQuad"
+    ]
+   ]
+  },
+  "_note": "OPTIONAL. The reference game does NOT dim non-winning symbols during a win highlight; use only when an overlay needs the contrast."
+ },
+ "idle": {
+  "loop": true,
+  "duration": 2.8,
+  "tracks": {
+   "scaleY": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     1.4,
+     1.015,
+     "sine"
+    ],
+    [
+     2.8,
+     1,
+     "sine"
+    ]
+   ],
+   "scaleX": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     1.4,
+     0.992,
+     "sine"
+    ],
+    [
+     2.8,
+     1,
+     "sine"
+    ]
+   ],
+   "y": [
+    [
+     0,
+     0,
+     "linear"
+    ],
+    [
+     1.4,
+     -1.5,
+     "sine"
+    ],
+    [
+     2.8,
+     0,
+     "sine"
+    ]
+   ]
+  },
+  "_note": "OPTIONAL. Not observed in the reference game, whose resting symbols were still. Skip it unless the design wants a living grid; it costs GPU and attention."
+ },
+ "tease": {
+  "loop": true,
+  "duration": 0.5,
+  "tracks": {
+   "scaleX": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     0.25,
+     1.1,
+     "sine"
+    ],
+    [
+     0.5,
+     1,
+     "sine"
+    ]
+   ],
+   "scaleY": [
+    [
+     0,
+     1,
+     "linear"
+    ],
+    [
+     0.25,
+     1.1,
+     "sine"
+    ],
+    [
+     0.5,
+     1,
+     "sine"
+    ]
+   ],
+   "rotation": [
+    [
+     0,
+     0,
+     "linear"
+    ],
+    [
+     0.125,
+     -3,
+     "sine"
+    ],
+    [
+     0.375,
+     3,
+     "sine"
+    ],
+    [
+     0.5,
+     0,
+     "sine"
+    ]
+   ],
+   "glow": [
+    [
+     0,
+     0.2,
+     "linear"
+    ],
+    [
+     0.25,
+     1,
+     "sine"
+    ],
+    [
+     0.5,
+     0.2,
+     "sine"
+    ]
+   ]
+  }
+ }
+}
