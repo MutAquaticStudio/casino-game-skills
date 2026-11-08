@@ -27,12 +27,41 @@
    ]
   },
   {
-   "name": "hair",
+   "name": "hair1",
    "parent": "head",
    "pivot": [
-    360,
-    130
-   ]
+    355,
+    125
+   ],
+   "physics": "hair"
+  },
+  {
+   "name": "hair2",
+   "parent": "hair1",
+   "pivot": [
+    320,
+    190
+   ],
+   "physics": "hair"
+  },
+  {
+   "name": "hair3",
+   "parent": "hair2",
+   "pivot": [
+    285,
+    260
+   ],
+   "physics": "hair"
+  },
+  {
+   "name": "hair4",
+   "parent": "hair3",
+   "pivot": [
+    255,
+    325
+   ],
+   "physics": "hair",
+   "length": 50
   },
   {
    "name": "arm_L",
@@ -83,26 +112,91 @@
    ]
   },
   {
-   "name": "skirt",
-   "parent": "hip",
-   "pivot": [
-    390,
-    410
-   ]
-  },
-  {
    "name": "feet",
    "parent": "root",
    "pivot": [
     390,
     985
    ]
+  },
+  {
+   "name": "hem",
+   "parent": "hip",
+   "pivot": [
+    390,
+    430
+   ]
+  },
+  {
+   "name": "flapR1",
+   "parent": "hip",
+   "pivot": [
+    520,
+    420
+   ],
+   "physics": "cloth"
+  },
+  {
+   "name": "flapR2",
+   "parent": "flapR1",
+   "pivot": [
+    580,
+    540
+   ],
+   "physics": "cloth"
+  },
+  {
+   "name": "flapR3",
+   "parent": "flapR2",
+   "pivot": [
+    650,
+    660
+   ],
+   "physics": "cloth"
+  },
+  {
+   "name": "flapR4",
+   "parent": "flapR3",
+   "pivot": [
+    715,
+    775
+   ],
+   "physics": "cloth",
+   "length": 50
+  },
+  {
+   "name": "flapL1",
+   "parent": "hip",
+   "pivot": [
+    300,
+    540
+   ],
+   "physics": "cloth"
+  },
+  {
+   "name": "flapL2",
+   "parent": "flapL1",
+   "pivot": [
+    265,
+    650
+   ],
+   "physics": "cloth"
+  },
+  {
+   "name": "flapL3",
+   "parent": "flapL2",
+   "pivot": [
+    235,
+    760
+   ],
+   "physics": "cloth",
+   "length": 50
   }
  ],
  "parts": [
   {
    "name": "hair_back",
-   "bone": "hair",
+   "bone": "hair1",
    "polygons": [
     [
      [
@@ -138,12 +232,93 @@
       160
      ]
     ]
-   ]
+   ],
+   "soft": {
+    "chain": [
+     {
+      "bone": "hair1",
+      "y": 125
+     },
+     {
+      "bone": "hair2",
+      "y": 190
+     },
+     {
+      "bone": "hair3",
+      "y": 260
+     },
+     {
+      "bone": "hair4",
+      "y": 325
+     }
+    ],
+    "cols": 6,
+    "rows": 14
+   }
   },
   {
    "name": "skirt",
-   "bone": "skirt",
-   "catch_all": true
+   "bone": "hem",
+   "catch_all": true,
+   "soft": {
+    "top": "hip",
+    "mid": "hem",
+    "bottom": "feet",
+    "y_top": 430,
+    "y_bottom": 840,
+    "cols": 8,
+    "rows": 16,
+    "zones": [
+     {
+      "x": [
+       530,
+       721
+      ],
+      "falloff": 25,
+      "y_end": 800,
+      "chain": [
+       {
+        "bone": "flapR1",
+        "y": 420
+       },
+       {
+        "bone": "flapR2",
+        "y": 540
+       },
+       {
+        "bone": "flapR3",
+        "y": 660
+       },
+       {
+        "bone": "flapR4",
+        "y": 775
+       }
+      ]
+     },
+     {
+      "x": [
+       205,
+       300
+      ],
+      "falloff": 20,
+      "y_end": 800,
+      "chain": [
+       {
+        "bone": "flapL1",
+        "y": 540
+       },
+       {
+        "bone": "flapL2",
+        "y": 650
+       },
+       {
+        "bone": "flapL3",
+        "y": 760
+       }
+      ]
+     }
+    ]
+   }
   },
   {
    "name": "feet",

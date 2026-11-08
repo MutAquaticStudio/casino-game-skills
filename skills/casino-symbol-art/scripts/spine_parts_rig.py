@@ -12,6 +12,9 @@ Spec (JSON, coordinates are pixels of the image, y down):
   "overlap": 8,                            # px each part extends beneath neighbours
   "bones": [ {"name": "hip",  "parent": "root", "pivot": [390, 400]}, ... ],
   "parts": [ {"name": "torso", "bone": "chest", "polygons": [[[x,y], ...]]},     # back to front order
+             # a part that must stay seamless between a swaying and a planted bone (skirt and legs between hip and feet):
+             #   {"name": "skirt", "bone": "hem", "catch_all": true,
+             #    "soft": {"top": "hip", "mid": "hem", "bottom": "feet", "y_top": 430, "y_bottom": 840, "cols": 8, "rows": 16}}
              {"name": "spear", "bone": "spear", "capsules": [{"p0": [0,905], "p1": [330,380], "r": 30}]},   # also "circles"
              {"name": "skirt", "bone": "skirt", "catch_all": true} ],             # gets all unclaimed pixels
   "idle":  { "head": {"rot": 1.2, "phase": -1.1, "ty": 1.2} }                     # optional overrides
@@ -42,9 +45,20 @@ DEFAULT_IDLE = {
     "dragon": dict(rot=1.8, ty=4.0, phase=-0.9),
     "pet":    dict(rot=1.8, ty=4.0, phase=-0.9),
     "skirt":  dict(rot=1.3, phase=-1.6),
+    "hem":    dict(rot=1.3, phase=-1.6),
+    "flap":   dict(rot=2.6, phase=-1.8),
     "cape":   dict(rot=2.0, phase=-1.9),
     "tail":   dict(rot=2.5, phase=-2.2),
     "feet":   dict(),
+}
+
+
+# Spine 4.2 physics constraint presets (rotate-mode secondary motion). The constraint reacts to the movement of its
+# parent bones (inertia) and springs back (strength, damping); wind adds a steady breeze. Tune on the preview.
+PHYSICS = {
+    "hair":  dict(rotate=1, inertia=0.55, strength=40, damping=0.80, mass=1.2, wind=0.0, gravity=0.0, mix=1),
+    "cloth": dict(rotate=1, inertia=0.60, strength=55, damping=0.78, mass=1.6, wind=0.0, gravity=0.0, mix=1),
+    "tail":  dict(rotate=1, inertia=0.55, strength=35, damping=0.82, mass=1.4, wind=0.0, gravity=0.0, mix=1),
 }
 
 
@@ -59,6 +73,85 @@ def idle_params(name, overrides):
 
 def smooth_keys(period, n):
     return [(round(period * k / n, 4), 2 * math.pi * k / n) for k in range(n + 1)]
+
+
+def smoothstep(e0, e1, x):
+    t = min(1.0, max(0.0, (x - e0) / (e1 - e0)))
+    return t * t * (3 - 2 * t)
+
+
+def chain_weights(y, chain):
+    """Weights of a bone chain (list of {"bone","y"}) for a vertex at image height y: linear between neighbours."""
+    ys = [float(c["y"]) for c in chain]
+    if y <= ys[0]: return {chain[0]["bone"]: 1.0}
+    if y >= ys[-1]: return {chain[-1]["bone"]: 1.0}
+    for i in range(len(ys) - 1):
+        if ys[i] <= y <= ys[i + 1]:
+            t = smoothstep(0.0, 1.0, (y - ys[i]) / (ys[i + 1] - ys[i]))
+            return {chain[i]["bone"]: 1 - t, chain[i + 1]["bone"]: t}
+
+
+def soft_mesh(box, cfg, sk, pivot, bone_index):
+    """Weighted mesh for a part that must stay continuous while several bones move differently.
+    Base weighting by image height, either
+      top / mid / bottom bones with y_top and y_bottom (skirt and legs between a swaying hip and planted feet), or
+      "chain": [{"bone": b1, "y": y1}, {"bone": b2, "y": y2}, ...] (hair strand, tail, long cloth hanging from b1).
+    Optional "zones": [{"x": [x0, x1], "falloff": 30, "chain": [...]}] blend a bone chain into a horizontal region
+    of the base weighting (a cloth flap or a ribbon on the side of a skirt); the blend ramps in between the
+    first two chain joints so the top of the flap stays attached."""
+    x0, y0, x1, y1 = box; w, h = x1 - x0, y1 - y0
+    cols, rows = int(cfg.get("cols", 8)), int(cfg.get("rows", 16))
+    xs = np.linspace(x0, x1, cols + 1); ys = np.linspace(y0, y1, rows + 1)
+    grid, verts = {}, []
+    def add(i, j):
+        grid[(i, j)] = len(verts); verts.append((xs[i], ys[j]))
+    for i in range(cols + 1): add(i, 0)
+    for j in range(1, rows + 1): add(cols, j)
+    for i in range(cols - 1, -1, -1): add(i, rows)
+    for j in range(rows - 1, 0, -1): add(0, j)
+    hull = len(verts)
+    for j in range(1, rows):
+        for i in range(1, cols): add(i, j)
+    tris = []
+    for j in range(rows):
+        for i in range(cols):
+            a, b, c, d = grid[(i, j)], grid[(i + 1, j)], grid[(i + 1, j + 1)], grid[(i, j + 1)]
+            tris += [a, b, c, a, c, d]
+    def base(y):
+        if "chain" in cfg:
+            return chain_weights(y, cfg["chain"])
+        top, mid, bot = cfg["top"], cfg.get("mid"), cfg["bottom"]
+        yt, yb = float(cfg["y_top"]), float(cfg["y_bottom"])
+        t = (y - yt) / (yb - yt)
+        w_bot = smoothstep(0.55, 1.0, t) if mid else smoothstep(0.0, 1.0, t)
+        w_top = 1 - smoothstep(0.0, 0.5, t) if mid else 1 - w_bot
+        ws = {top: w_top, bot: w_bot}
+        if mid: ws[mid] = max(0.0, 1 - w_top - w_bot)
+        return ws
+    out, uvs = [], []
+    for (x, y) in verts:
+        ws = dict(base(y))
+        for z in cfg.get("zones", []):
+            zx0, zx1, fo = z["x"][0], z["x"][1], float(z.get("falloff", 30))
+            zw = min(smoothstep(zx0 - fo, zx0, x), 1 - smoothstep(zx1, zx1 + fo, x))
+            ch = z["chain"]
+            ramp = smoothstep(float(ch[0]["y"]), float(ch[1]["y"]), y) if len(ch) > 1 else 1.0
+            amt = zw * ramp
+            if "y_end" in z:                    # fade the blend out below the end of the cloth (do not drag legs or feet)
+                amt *= 1 - smoothstep(float(z["y_end"]) - 30, float(z["y_end"]), y)
+            if amt > 0:
+                cw = chain_weights(y, ch)
+                ws = {k: v * (1 - amt) for k, v in ws.items()}
+                for k, v in cw.items(): ws[k] = ws.get(k, 0.0) + v * amt
+        ws = {k: v for k, v in ws.items() if v > 0.001}
+        tot = sum(ws.values()); ws = {k: v / tot for k, v in ws.items()}
+        wx, wy = sk((x, y))
+        out.append(len(ws))
+        for b, wt in ws.items():
+            bx, by = sk(pivot[b])
+            out += [bone_index[b], round(wx - bx, 3), round(wy - by, 3), round(wt, 5)]
+        uvs += [round((x - x0) / w, 6), round((y - y0) / h, 6)]
+    return {"type": "mesh", "uvs": uvs, "triangles": tris, "vertices": out, "hull": hull, "width": w, "height": h}
 
 
 def pack(tiles, pad=2, width=2048):
@@ -83,6 +176,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("spec"); ap.add_argument("--out", default="rig"); ap.add_argument("--name", default="mascot")
     ap.add_argument("--amp", type=float, default=0.5); ap.add_argument("--debug", action="store_true")
+    ap.add_argument("--wind", type=float, default=0.0, help="extra steady wind added to every physics constraint (tune on the preview)")
+    ap.add_argument("--sway", type=float, default=0.0, help="amplitude of the oscillating breeze keyed on every physics constraint in `idle` (0 = off)")
     ap.add_argument("--no-adopt", action="store_true", help="keep stray catch-all pieces where they are")
     a = ap.parse_args()
     spec = json.load(open(a.spec)); base = os.path.dirname(os.path.abspath(a.spec))
@@ -135,7 +230,9 @@ def main():
     spine_bones = [{"name": "root"}]
     for b in bones:
         px, py = sk(pivot[b["parent"]]); bx, by = sk(pivot[b["name"]])
-        spine_bones.append({"name": b["name"], "parent": b["parent"], "x": round(bx - px, 3), "y": round(by - py, 3), "length": 30})
+        kids = [c for c in bones if c["parent"] == b["name"]]
+        ln = math.hypot(pivot[kids[0]["name"]][0] - pivot[b["name"]][0], pivot[kids[0]["name"]][1] - pivot[b["name"]][1]) if kids else float(b.get("length", 60))
+        spine_bones.append({"name": b["name"], "parent": b["parent"], "x": round(bx - px, 3), "y": round(by - py, 3), "length": round(ln, 2)})
 
     tiles, slots, atts = [], [], {}
     kern = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * overlap + 1, 2 * overlap + 1))
@@ -149,7 +246,7 @@ def main():
         ys, xs = np.where(keep)
         x0, x1, y0, y1 = int(xs.min()), int(xs.max()) + 1, int(ys.min()), int(ys.max()) + 1
         tile = arr[y0:y1, x0:x1].copy(); tile[~keep[y0:y1, x0:x1]] = 0
-        tiles.append(dict(name=p["name"], img=Image.fromarray(tile, "RGBA"), box=(x0, y0, x1, y1), bone=p["bone"]))
+        tiles.append(dict(name=p["name"], img=Image.fromarray(tile, "RGBA"), box=(x0, y0, x1, y1), bone=p["bone"], soft=p.get("soft")))
         if a.debug:
             col = rng.randint(60, 255, 3); dbg[own > 0] = col
     page = pack(tiles)
@@ -163,7 +260,11 @@ def main():
         x0, y0, x1, y1 = t["box"]; cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
         bx, by = sk(pivot[t["bone"]]); sx, sy = sk((cx, cy))
         slots.append({"name": t["name"], "bone": t["bone"], "attachment": t["name"]})
-        atts[t["name"]] = {t["name"]: {"x": round(sx - bx, 3), "y": round(sy - by, 3), "width": x1 - x0, "height": y1 - y0}}
+        if t["soft"]:
+            bone_index = {n: i for i, n in enumerate(names)}
+            atts[t["name"]] = {t["name"]: soft_mesh(t["box"], t["soft"], sk, pivot, bone_index)}
+        else:
+            atts[t["name"]] = {t["name"]: {"x": round(sx - bx, 3), "y": round(sy - by, 3), "width": x1 - x0, "height": y1 - y0}}
     page.save(os.path.join(a.out, a.name + ".png"))
 
     # ---------------- animations
@@ -171,9 +272,25 @@ def main():
     ov_idle = spec.get("idle", {})
     P, N = 3.2, 16
     idle = {"bones": {}}
+    physics = []
+    for b in bones:
+        if b.get("physics"):
+            cfg = dict(PHYSICS[b["physics"]] if isinstance(b["physics"], str) else {**PHYSICS["hair"], **b["physics"]})
+            if isinstance(b["physics"], str) and "physics_override" in b: cfg.update(b["physics_override"])
+            cfg["wind"] = cfg.get("wind", 0.0) + a.wind * (1.0 if cfg.get("wind", 0) >= 0 else -1.0)
+            physics.append({"name": b["name"] + "_phys", "bone": b["name"], **cfg})
+    pbones = {p["bone"] for p in physics}
+    by_name = {b["name"]: b for b in bones}
+    def depth_of(n):                                 # how many physics bones above this one in its chain
+        d = 0
+        while by_name[n]["parent"] in by_name and by_name[by_name[n]["parent"]].get("physics"):
+            n = by_name[n]["parent"]; d += 1
+        return d
     for b in bones:
         q = idle_params(b["name"], ov_idle)
         if not q: continue
+        if b["name"] in pbones:                      # chain bones get a gentle keyed sway, lagging along the chain;
+            q = dict(q); q["phase"] = q.get("phase", 0) - 0.55 * depth_of(b["name"])   # physics adds overshoot on top
         tl = {}
         ks = smooth_keys(P, N)
         if q.get("rot"): tl["rotate"] = [{"time": t, "value": round(q["rot"] * a.amp * math.sin(ph + q.get("phase", 0)), 3)} for t, ph in ks]
@@ -184,6 +301,19 @@ def main():
             tl["scale"] = [{"time": t, "x": round(1 + q.get("sx", 0) * a.amp * math.sin(ph + q.get("phase", 0) - math.pi / 2), 5),
                             "y": round(1 + q.get("sy", 0) * a.amp * math.sin(ph + q.get("phase", 0) - math.pi / 2), 5)} for t, ph in ks]
         if tl: idle["bones"][b["name"]] = tl
+    # breeze: each physics constraint gets a wind timeline, phase-shifted along its chain so the tip lags the root
+    if physics and a.sway > 0:
+        idle["physics"] = {}
+        chain_pos = {}
+        for p in physics:
+            nm = p["bone"]; depth = 0; cur = nm
+            by_name = {b["name"]: b for b in bones}
+            while by_name[cur]["parent"] in by_name and by_name[by_name[cur]["parent"]].get("physics"):
+                cur = by_name[cur]["parent"]; depth += 1
+            kind = by_name[nm]["physics"] if isinstance(by_name[nm]["physics"], str) else "hair"
+            amp = a.sway * (1.0 if kind == "hair" else 0.8)
+            phase = -0.7 * depth + (0.0 if nm.startswith("hair") else (1.3 if "R" in nm[-2:] else 2.2))
+            idle["physics"][p["name"]] = {"wind": [{"time": t, "value": round(p["wind"] + amp * math.sin(ph + phase), 3)} for t, ph in smooth_keys(P, N)]}
     T = 1.4; ks = [round(T * k / 14, 4) for k in range(15)]
     env = lambda t: math.sin(math.pi * min(1.0, t / T)) ** 2
     cheer = {"bones": {}}
@@ -194,8 +324,10 @@ def main():
             tl["translate"] = [{"time": t, "x": 0, "y": round(22 * s * env(t), 3)} for t in ks]
         elif n.startswith("chest"):
             tl["scale"] = [{"time": t, "x": round(1 - 0.03 * env(t) * math.cos(6 * t), 5), "y": round(1 + 0.05 * env(t) * math.cos(6 * t), 5)} for t in ks]
-        elif n.startswith(("head", "hair", "arm", "forearm", "spear", "weapon", "dragon", "pet", "skirt", "cape", "tail")):
-            amp = {"head": 5, "hair": -9, "arm": 7, "forearm": 9, "spear": 3, "weapon": 3, "dragon": 8, "pet": 8, "skirt": -6, "cape": -9, "tail": -9}
+        elif n in pbones:
+            continue
+        elif n.startswith(("head", "hem", "hair", "arm", "forearm", "spear", "weapon", "dragon", "pet", "skirt", "cape", "tail")):
+            amp = {"head": 5, "hem": -6, "hair": -9, "arm": 7, "forearm": 9, "spear": 3, "weapon": 3, "dragon": 8, "pet": 8, "skirt": -6, "cape": -9, "tail": -9}
             k = next(v for kk, v in amp.items() if n.startswith(kk))
             tl["rotate"] = [{"time": t, "value": round(k * env(t) * math.sin(5 * t + 0.4 * (len(n) % 5)), 3)} for t in ks]
         if tl: cheer["bones"][n] = tl
@@ -207,7 +339,7 @@ def main():
         keys = [{"time": round(t0, 3), "value": 0}, {"time": round(t0 + 0.4, 3), "value": 18}, {"time": round(t0 + 0.8, 3), "value": 0}]
         jt["bones"][b["name"]] = {"rotate": keys}
     skel = {"skeleton": {"hash": "", "spine": "4.2.00", "x": -W / 2, "y": 0, "width": W, "height": H, "images": "", "audio": ""},
-            "bones": spine_bones, "slots": slots, "skins": [{"name": "default", "attachments": atts}],
+            "bones": spine_bones, "slots": slots, **({"physics": physics} if physics else {}), "skins": [{"name": "default", "attachments": atts}],
             "animations": {"idle": idle, "cheer": cheer, "joint_test": jt}}
     json.dump(skel, open(os.path.join(a.out, a.name + ".json"), "w"))
     open(os.path.join(a.out, a.name + ".atlas"), "w").write(atlas)

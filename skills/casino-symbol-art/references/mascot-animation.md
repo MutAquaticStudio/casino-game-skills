@@ -58,6 +58,35 @@ in the rendered cheer strip. The crack check (new thin seams during motion) read
 989 px in cheer against about 5,500 px of seams already present at rest in the artwork itself (hair strands,
 cloth edges); it is a number to watch, not a pass or fail on its own.
 
+### Seamless legs and skirt (soft mesh) and the ankle seam
+A review of the idle found the two lower legs misaligned at the ankle: the legs were part of the swaying
+skirt while the feet were planted, so the shin shifted up to **11 px** sideways against the boot. Parts
+that must stay continuous between bones that move differently are now weighted meshes: a part with `"soft"`
+becomes a Spine mesh whose weights run from the hip (top) through a `hem` bone (middle) to the `feet` bone
+(bottom, same motion as the boots). Measured after the fix: the shift at the ankle seam is **0.00 px**
+(feet 0.00 px), mid-leg 3.6 px, so nothing tears.
+
+### Advanced rigging for hair and clothing (bone chains and physics)
+Hair and cloth need many small bones, not one rotating plate.
+- **Chains:** `hair1..hair4` hang from the head, `flapR1..flapR4` and `flapL1..flapL3` hang from the hip. Each
+  bone's length is the distance to the next pivot (physics uses it).
+- **Weights:** a soft part can use `"chain": [{"bone", "y"}, ...]` (weights interpolate along the chain by
+  height; used for the hair) and `"zones": [{"x": [x0, x1], "falloff", "y_end", "chain": [...]}]` that blend a
+  chain into a horizontal region of the skirt mesh (the side flaps) without dragging the legs below `y_end`.
+- **Motion:** each chain bone gets a small keyed sway that lags along the chain (`--amp 0.5`), plus a Spine 4.2
+  **physics constraint** (`"physics": "hair" | "cloth" | "tail"` on a bone; presets in `PHYSICS`) that adds
+  overshoot and settle in the runtime. Verified: the rig, with 11 physics constraints, loads and simulates in
+  spine-core 4.2.120 (3 warm-up loops, then recorded), the cheer hop excites it without instability.
+- **Measured (priestess, 997 px tall, idle):** hair tip travel 17 px, mid-hair 8 px, right flap tip 24 px,
+  left flap tip 12 px, ankle seam 0.0 px.
+- **Tuning lesson:** physics alone was too weak to see (2 to 5 px) because the idle body motion is small, and
+  forcing it with an oscillating wind went unstable (a 250 px hair explosion at `--sway 250`). So the chain
+  carries a keyed base sway and physics only adds lag; `--sway` (keyed wind on the constraints) and `--wind`
+  stay available but default to 0.
+- **Not verified:** that `@esotericsoftware/spine-pixi-v8` runs physics the same way in the game (it needs
+  `Physics.update` each frame and the same step; check the hair does not jitter at 60 and 120 Hz), and that
+  frame-rate changes keep amplitude stable.
+
 Limits of 2a: parts are rigid, so cloth and hair bend only as separate parts; the area hidden under a
 part is a copy of neighbouring pixels (the overlap), not painted art, so rotations beyond about 10 degrees
 show edges (the 18 degree joint test is deliberately harsh); polygons are hand-authored from a grid and

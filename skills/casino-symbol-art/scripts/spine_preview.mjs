@@ -28,11 +28,18 @@ const meta = skel.drawOrder.map((slot) => {
   return { name: slot.data.name, type: "none" };
 });
 const out = { animation: anim, duration: a.duration, bones: data.bones.map((b) => b.name), slots: meta, frames: [] };
-for (let k = 0; k < n; k++) {
-  const t = (T * k) / n;
+// Physics needs sequential time: run `warm` full loops first (not recorded) so the simulation is in its steady state.
+const dt = T / n, warm = skel.data.physicsConstraints.length ? 3 : 0;
+const step = (t) => {
+  skel.update(dt);
   skel.setToSetupPose();
   a.apply(skel, 0, t, false, [], 1, sp.MixBlend.setup, sp.MixDirection.mixIn);
   skel.updateWorldTransform(sp.Physics.update);
+};
+for (let w = 0; w < warm; w++) for (let k = 0; k < n; k++) step((T * k) / n);
+for (let k = 0; k < n; k++) {
+  const t = (T * k) / n;
+  step(t);
   out.frames.push({ t, slots: skel.drawOrder.map((slot) => { const v = verts(slot); return v ? v.map((x) => Math.round(x * 100) / 100) : null; }) });
 }
 process.stdout.write(JSON.stringify(out));
