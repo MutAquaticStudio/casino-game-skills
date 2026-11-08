@@ -50,10 +50,11 @@ a = Art(512, 512, seed=3)
 gem = a.poly([(256,50),(430,190),(380,430),(130,430),(82,190)])
 a.gradient(gem, '#ff5a7a', '#8a0f3c', (256,50), (256,430))
 a.fill(a.circle(190,150,28), '#ffffff', 0.7)
-rgb = np.where(a.a[..., None] > 1e-4, a.rgb / np.maximum(a.a[..., None], 1e-4), 0)   # un-premultiply
+rgb = np.where(a.a[..., None] > 1e-4, a.rgb / np.maximum(a.a[..., None], 1e-4), 0) * 255   # un-premultiply, 0-1 -> 0-255
 Image.fromarray(np.dstack([np.clip(rgb, 0, 255), a.a * 255]).astype(np.uint8), "RGBA").save("art/svg/ruby.png")
 ```
-(Art stores 0-255 premultiplied colour; the snippet was run and gives a clean alpha edge.)
+(Art stores premultiplied colour in the 0-1 range (`hexc()` divides by 255), so un-premultiply and then
+scale by 255; without `* 255` every pixel comes out black.)
 
 **Route B, paint on a key colour, then cut out.** Paint the symbol in any module on a flat
 background that does not appear in the symbol (magenta `#ff00ff` works), then:
