@@ -19,12 +19,16 @@ user's language; keep file names, code and Stake terms in English.
   paths (or a bitmap font), never `<text>`.
 - Readable in the 400×225 popout and on a phone: judge every symbol at its real on-screen size.
 
-**What this makes, and what it doesn't.** Two routes. **Vector SVG** (default): flat, glossy
+**What this makes, and what it doesn't.** Three routes. **Vector SVG** (default): flat, glossy
 casino, bevelled gems and coins, ornate frames, card ranks, icons, themed titles. **Code-painted
 raster** (`references/raster-art.md`): textured looks such as ink, oil, watercolour, mosaic,
 stained glass, comic, pixel art, mostly for backgrounds and title scenes, and for high-pay
-symbols via a transparent sheet or cutout. Neither replaces photoreal rendering or true
-hand-painted art. If the user wants that look, write an art brief for an artist (see
+symbols via a transparent sheet or cutout. **Model-generated layers**
+(`references/style-valkyrie-hacksaw.md` §6): painted semi-realistic art at the level of
+studio-grade slots (backdrop, hero, frame, board, symbols), one image-model call per layer,
+keyed out and composited by code. Use it only when an image-generation tool is available and the
+user has agreed to the cost; otherwise fall back to the first two routes, which do not replace
+true hand-painted art. For that look without a generator, write an art brief for an artist (see
 `references/symbol-design.md` §7) and use this skill for the pipeline.
 
 | Need | Route | Read |
@@ -32,7 +36,8 @@ hand-painted art. If the user wants that look, write an art brief for an artist 
 | Symbols, icons, frames, flat or glossy look | SVG | §3 below, `references/svg-craft.md` |
 | Background, win-title scene, loading screen, key art, textured look | Raster | `references/raster-art.md` |
 | High-pay symbol with painterly texture | Raster (transparent sheet or cutout) | `references/raster-art.md` §3 |
-| "Premium slot look", "like Valkyrie / Hacksaw": scene structure, palette split, roundel premiums, rank colour code | Either | `references/style-valkyrie-hacksaw.md` (principles only; never copy their characters or logos) |
+| "Premium slot look", "like Valkyrie / Hacksaw": scene structure, palette split, roundel premiums, rank colour code | Either | `references/style-valkyrie-hacksaw.md` §1–5 (principles only; never copy their characters or logos) |
+| Painted, studio-grade art (backdrop, hero, frame, board, full symbol set) | Model-generated layers | `references/style-valkyrie-hacksaw.md` §6, `scripts/compose_layered_screen.py`, `scripts/build_symbol_set.py` |
 
 ## 1. Style guide first
 Lock these before the first symbol, then save them as `art/style.json` so every later asset
