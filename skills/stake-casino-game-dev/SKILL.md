@@ -1,6 +1,6 @@
 ---
 name: "stake-casino-game-dev"
-description: "Ideate, build, balance, review and submit casino/slot games for Stake Engine: concept and mode ladder, Math SDK, RGS API, PixiJS 8 and Three.js frontends, Bet UI with measured phone and desktop layouts, win celebrations and round timing rules, localization, approval checklist. Use for any Stake Engine slot task, from idea to submission."
+description: "Ideate, build, balance, review and submit casino/slot games for Stake Engine: concept and mode ladder, game mechanics catalogue (pay types, tumble, wilds, multipliers, hold-and-win, free-spin variants, stateless alternatives), Math SDK, RGS API, PixiJS 8 and Three.js frontends, Bet UI with measured phone and desktop layouts, win celebrations and round timing rules, localization, approval checklist. Use for any Stake Engine slot task, from idea to submission."
 ---
 
 # Casino game development for Stake Engine
@@ -48,10 +48,10 @@ Consequences:
 ### Workflow map (what each step hands to the next)
 | Step | Skill | Needs | Produces | Gate before moving on |
 |---|---|---|---|---|
-| 1 Concept | this skill, §7 (`references/concept-design.md`) | idea or brief | concept doc: depth stack, mode ladder, event list, theme, grid, target RTP/wincap | §2 screen passed; mode ladder final (no modes can be added after approval) |
+| 1 Concept | this skill, §7 (`references/concept-design.md`), §14 (`references/game-mechanics.md`) | idea or brief | concept doc: depth stack, mode ladder, event list, theme, grid, target RTP/wincap | §2 screen passed; mode ladder final (no modes can be added after approval) |
 | 2 Math | this skill, Phase 2 | concept doc | game_config.py, books, lookup tables, `winLevel` per outcome | `validate_math.py` clean |
 | 3 Art | `casino-symbol-art` | concept theme + mode list + real symbol size | `art/style.json` (with `style_lock`), symbol atlas, frame, board, backdrop, win/transition art | `style_check.py` no FAIL; shrink and greyscale tests; `silhouette_check.py` for frameless symbols; `tile_check.py` on the tile; originality |
-| 4 Frontend | this skill, Phase 3, §12–13 (`references/pixi-slots.md`, `references/bet-ui-hud.md`) | books, atlas, `art/motion.json` + `art/fx/`, event list | static build wired to RGS, HUD, win celebration, locales | check_static_build.py clean; every book event type has a handler |
+| 4 Frontend | this skill, Phase 3, §12–13 (`references/pixi-slots.md`, `references/bet-ui-hud.md`) | books, atlas, `art/motion.json` + `art/fx/`, event list | static build wired to RGS, HUD, win celebration, locales | check_static_build.py clean; every book event type has a handler (`mechanic_stats.py --handlers`) |
 | 5 Audio | `casino-audio-design` | event list, tier table | audio files + AudioManager | event → sound table complete |
 | 6 Integration | this skill, Phase 4 | build | test results across currencies, modes, sizes | 10 wins per mode match RGS payout; phone layouts pass `mobile_layout.py report` (§13.4) |
 | 7 Audit | `casino-game-audit` | build or screenshots | scored report | no blockers; Graphics & art direction (area A) ≥ 4 |
@@ -185,7 +185,8 @@ if len(rtps) > 1:
     say("PASS" if s <= .005 else "FAIL", "all", f"RTP spread {s*100:.3f}%")
 sys.exit(1 if fails else 0)
 ```
-Also eyeball win-range gaps in the PAR sheet. Fix math failures before frontend work.
+Also eyeball win-range gaps in the PAR sheet. Check that each mechanic fires as often as the concept doc says:
+`python scripts/mechanic_stats.py <publish_files>` (share of rounds per event type, per mode; §14.12). Fix math failures before frontend work.
 
 ### Phase 3 – Frontend
 The build must be **static** (HTML/CSS/JS + assets; SvelteKit → `adapter-static`; Vite →
@@ -453,8 +454,9 @@ to this file, prefer them over the inline snippets; if they don't, use the inlin
 - `scripts/validate_math.py <publish_files>` – full math validator (format + approval stats, win-range gaps, `--json` output)
 - `scripts/check_social_terms.py <dir>` – stake.us restricted-wording scan
 - `scripts/check_static_build.py <dist>` – external requests, hardcoded RGS, absolute paths, console logs
+- `scripts/mechanic_stats.py <publish_files> [--handlers file]` – how often each event type (mechanic) occurs per mode; flags event types with no frontend handler
 - `assets/rgs-client.ts`, `assets/book-player.ts` – typed RGS client, money helpers, round controller (live/resume/replay)
-- `references/concept-design.md` (§7), `references/win-presentation.md` (§8.3–8.5), `references/pixi-slots.md` (§12), `references/bet-ui-hud.md` (§13), `references/mobile-ui.md` and `references/layout-wireframes.md` (phone and desktop layouts, with `scripts/mobile_layout.py` and `scripts/mobile_capture.mjs`)
+- `references/concept-design.md` (§7), `references/game-mechanics.md` (§14), `references/win-presentation.md` (§8.3–8.5), `references/pixi-slots.md` (§12), `references/bet-ui-hud.md` (§13), `references/mobile-ui.md` and `references/layout-wireframes.md` (phone and desktop layouts, with `scripts/mobile_layout.py` and `scripts/mobile_capture.mjs`)
 - `references/stake-engine/*.md` – detailed notes per topic (overview, math SDK, math requirements, RGS API, frontend requirements, approval checklist)
 - `references/pixijs/vendor/` – the official PixiJS v8 agent skills (26 topics, MIT), see §12
 - `references/threejs/casino-3d.md` + `references/threejs/vendor/` (CloudAI-X Three.js guides, MIT)
@@ -472,3 +474,9 @@ Rules that matter most for approval: the static build must not reach external UR
 Use the patterns of live studio slots, not their look. The common thread is **simplicity first**: a handful of flat controls, one dominant spin button, no ornate frames; the theme lives in the board, symbols, background and effects, not in the HUD (§13.0 is a guideline from samples, not a Stake rule).
 
 **Full detail in `references/bet-ui-hud.md`**: §13.0 simplicity first, §13.1 layout archetypes, §13.2 anatomy and measurements, §13.3 mode and feature controls, §13.4 responsive variants (phone portrait and desktop, with `mobile_layout.py`), §13.5 visual rules. Phone numbers: `references/mobile-ui.md`; desktop wireframe: `references/layout-wireframes.md`.
+
+## 14. Game mechanics catalogue
+
+Every mechanic must start and end inside one round (one book line). Pick mechanics as layers of the depth stack (§7.1), give each one its events and a frontend handler, and offer a stateless alternative when a request needs memory between rounds (jackpots, gamble, cross-spin meters are not allowed).
+
+**Full detail in `references/game-mechanics.md`**: §14.1 pay systems (lines, ways, variable reels, cluster, scatter pays, custom shapes), §14.2 board modifiers (tumble, wild types, mystery, transforms, split, grid growth, colossal, nudges), §14.3 multipliers, §14.4 hold-and-win, §14.5 free-spin and bonus structures (incl. pick bonuses on a pre-computed RGS), §14.6 in-round meters, §14.7 feature modes, §14.8 other game types, §14.9 forbidden mechanics and alternatives, §14.10 combination recipes, §14.11 cost and risk, §14.12 checklist. Check frequencies in the books with `scripts/mechanic_stats.py`.

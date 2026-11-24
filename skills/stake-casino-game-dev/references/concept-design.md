@@ -24,6 +24,8 @@ Build the concept as a **depth stack** and state how each layer amplifies the ot
 | 4. In-round meter | collect symbols during the round/bonus to unlock upgrades (bigger multipliers, extra rows, sticky wilds) – resets when the round ends, so it is stateless-safe |
 | 5. Bonus escalation | levels inside free spins, retriggers that add spins *and* upgrade, sticky elements that last until the bonus ends, a final "super" phase |
 
+Each mechanic in this table (how it works, Math SDK side, book events, presentation, pitfalls) and ready-made combinations: `references/game-mechanics.md` (§14.1–14.6, recipes in §14.10, forbidden mechanics in §14.9).
+
 For every concept write: the **interaction chain** (e.g. cascade → raises spot multiplier →
 multiplier also boosts the meter → meter unlocks a row → more ways → more cascades), the
 **common round** feel, the **typical bonus** feel, and the **dream path** to wincap. If you can't
