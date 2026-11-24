@@ -1,6 +1,6 @@
 ---
 name: "stake-casino-game-dev"
-description: "Ideate, build, balance, review and submit casino/slot games for Stake Engine: concept and mode ladder, Math SDK, RGS API, PixiJS 8 and Three.js frontends, Bet UI with measured phone and desktop layouts, win celebrations and round timing rules, localization, approval checklist. Use for any Stake Engine slot task, from idea to submission."
+description: "Ideate, build, balance, review and submit casino/slot games for Stake Engine, with a provider gate so concept and mechanics work for other providers too: concept and mode ladder, game mechanics catalogue (81 mechanics in a 12-category taxonomy, with Stake Engine status and stateless alternatives plus platform and market notes for other providers), Math SDK, RGS API, PixiJS 8 and Three.js frontends, Bet UI with measured phone and desktop layouts, win celebrations and round timing rules, localization, approval checklist. Use for any Stake Engine slot task, from idea to submission."
 ---
 
 # Casino game development for Stake Engine
@@ -38,7 +38,7 @@ Consequences:
 
 ## 2. Hard restrictions (rejection)
 - Original game only; no pre-purchased/licensed games that exist elsewhere.
-- IP-clean names, titles, assets; title unique, no "Megaways"/"Xways"-type trademarks.
+- IP-clean names, titles, assets (no trademarked terms such as "Megaways"/"Xways"; the docs state the general IP rule).
 - No Stake™/Kick™ branding or themes. Unique art and audio – Web SDK sample assets are rejected.
 - Nothing offensive, explicit, discriminatory, in poor taste; nothing appealing to minors
   (incl. child-like characters). Reviewer discretion applies.
@@ -48,10 +48,10 @@ Consequences:
 ### Workflow map (what each step hands to the next)
 | Step | Skill | Needs | Produces | Gate before moving on |
 |---|---|---|---|---|
-| 1 Concept | this skill, §7 (`references/concept-design.md`) | idea or brief | concept doc: depth stack, mode ladder, event list, theme, grid, target RTP/wincap | §2 screen passed; mode ladder final (no modes can be added after approval) |
+| 1 Concept | this skill, §7 (`references/concept-design.md`), §14 (`references/game-mechanics.md`) | idea or brief | concept doc: depth stack, mode ladder, event list, theme, grid, target RTP/wincap | §2 screen passed; mode ladder final (no modes can be added after approval) |
 | 2 Math | this skill, Phase 2 | concept doc | game_config.py, books, lookup tables, `winLevel` per outcome | `validate_math.py` clean |
 | 3 Art | `casino-symbol-art` | concept theme + mode list + real symbol size | `art/style.json` (with `style_lock`), symbol atlas, frame, board, backdrop, win/transition art | `style_check.py` no FAIL; shrink and greyscale tests; `silhouette_check.py` for frameless symbols; `tile_check.py` on the tile; originality |
-| 4 Frontend | this skill, Phase 3, §12–13 (`references/pixi-slots.md`, `references/bet-ui-hud.md`) | books, atlas, `art/motion.json` + `art/fx/`, event list | static build wired to RGS, HUD, win celebration, locales | check_static_build.py clean; every book event type has a handler |
+| 4 Frontend | this skill, Phase 3, §12–13 (`references/pixi-slots.md`, `references/bet-ui-hud.md`) | books, atlas, `art/motion.json` + `art/fx/`, event list | static build wired to RGS, HUD, win celebration, locales | check_static_build.py clean; every book event type has a handler (`mechanic_stats.py --handlers`) |
 | 5 Audio | `casino-audio-design` | event list, tier table | audio files + AudioManager | event → sound table complete |
 | 6 Integration | this skill, Phase 4 | build | test results across currencies, modes, sizes | 10 wins per mode match RGS payout; phone layouts pass `mobile_layout.py report` (§13.4) |
 | 7 Audit | `casino-game-audit` | build or screenshots | scored report | no blockers; Graphics & art direction (area A) ≥ 4 |
@@ -61,6 +61,12 @@ art → build. If a later step finds a problem owned by an earlier one (e.g. a t
 symbol unreadable at popout size), go back to that step and re-run its gate, do not patch around it.
 
 ### Phase 1 – Concept & compliance pre-check
+**Provider gate first.** Ask which provider/RGS the game ships on and for which markets, unless the brief says so. The concept, mechanics
+(§14), win presentation (§8), UI (§12–13), art and audio guidance work for any provider. **Stake Engine:** follow everything in this skill,
+filter mechanics with the Stake column of §14.0. **Another provider:** use the whole mechanics catalogue with its "Other providers" column
+(platform needs and market rules, `references/game-mechanics.md` §14.14), and swap the Stake-only parts (§1–2 restrictions, Math SDK,
+RGS API, social mode, approval checklist, Phases 2, 4, 5) for that provider's SDK, RGS and certification process.
+
 Design the concept with §7 (depth stack, full mode ladder, engagement beats, responsible-design
 check) – never stop at "spin → line win → done". Then pin down grid, theme, target RTP
 (90–98%), wincap, volatility, and screen against §2. Deliver the §7 concept doc. For "make me a
@@ -185,7 +191,8 @@ if len(rtps) > 1:
     say("PASS" if s <= .005 else "FAIL", "all", f"RTP spread {s*100:.3f}%")
 sys.exit(1 if fails else 0)
 ```
-Also eyeball win-range gaps in the PAR sheet. Fix math failures before frontend work.
+Also eyeball win-range gaps in the PAR sheet. Check that each mechanic fires as often as the concept doc says:
+`python scripts/mechanic_stats.py <publish_files>` (share of rounds per event type, per mode; §14.13). Fix math failures before frontend work.
 
 ### Phase 3 – Frontend
 The build must be **static** (HTML/CSS/JS + assets; SvelteKit → `adapter-static`; Vite →
@@ -453,8 +460,9 @@ to this file, prefer them over the inline snippets; if they don't, use the inlin
 - `scripts/validate_math.py <publish_files>` – full math validator (format + approval stats, win-range gaps, `--json` output)
 - `scripts/check_social_terms.py <dir>` – stake.us restricted-wording scan
 - `scripts/check_static_build.py <dist>` – external requests, hardcoded RGS, absolute paths, console logs
+- `scripts/mechanic_stats.py <publish_files> [--handlers file]` – how often each event type (mechanic) occurs per mode; flags event types with no frontend handler
 - `assets/rgs-client.ts`, `assets/book-player.ts` – typed RGS client, money helpers, round controller (live/resume/replay)
-- `references/concept-design.md` (§7), `references/win-presentation.md` (§8.3–8.5), `references/pixi-slots.md` (§12), `references/bet-ui-hud.md` (§13), `references/mobile-ui.md` and `references/layout-wireframes.md` (phone and desktop layouts, with `scripts/mobile_layout.py` and `scripts/mobile_capture.mjs`)
+- `references/concept-design.md` (§7), `references/game-mechanics.md` (§14), `references/win-presentation.md` (§8.3–8.5), `references/pixi-slots.md` (§12), `references/bet-ui-hud.md` (§13), `references/mobile-ui.md` and `references/layout-wireframes.md` (phone and desktop layouts, with `scripts/mobile_layout.py` and `scripts/mobile_capture.mjs`)
 - `references/stake-engine/*.md` – detailed notes per topic (overview, math SDK, math requirements, RGS API, frontend requirements, approval checklist)
 - `references/pixijs/vendor/` – the official PixiJS v8 agent skills (26 topics, MIT), see §12
 - `references/threejs/casino-3d.md` + `references/threejs/vendor/` (CloudAI-X Three.js guides, MIT)
@@ -472,3 +480,11 @@ Rules that matter most for approval: the static build must not reach external UR
 Use the patterns of live studio slots, not their look. The common thread is **simplicity first**: a handful of flat controls, one dominant spin button, no ornate frames; the theme lives in the board, symbols, background and effects, not in the HUD (§13.0 is a guideline from samples, not a Stake rule).
 
 **Full detail in `references/bet-ui-hud.md`**: §13.0 simplicity first, §13.1 layout archetypes, §13.2 anatomy and measurements, §13.3 mode and feature controls, §13.4 responsive variants (phone portrait and desktop, with `mobile_layout.py`), §13.5 visual rules. Phone numbers: `references/mobile-ui.md`; desktop wireframe: `references/layout-wireframes.md`.
+
+## 14. Game mechanics catalogue
+
+The catalogue holds 81 mechanics under the studio's 12-category iGaming taxonomy (reel, symbol, win, bonus, multiplier, jackpot, risk, instant win, table, live, multiplayer, meta-game). It starts with a **provider gate**: ask which provider/RGS and which markets the game is for.
+- **Stake Engine:** each mechanic is ✅, ❌ rule (named in the docs: jackpots, gamble, continuation, early cashout), ⚠️ arch (follows from the stateless model: no state between rounds, a player cannot affect the outcome; use the stateless form in the card), 💡 skill recommendation (not a Stake rule) or ❓ ask Stake (non-slot games the docs do not cover).
+- **Other providers:** every mechanic may be used; 🔧 marks those needing platform support (saved state per player and bet level, jackpot server, multi-request rounds) and ⚖️ those regulated in some markets. Implementation notes in §14.14.
+
+**Full detail in `references/game-mechanics.md`**: provider gate and legends, §14.0 taxonomy and master table, §14.1 core mechanics, §14.2 basic bonus and feature mechanics, §14.3 advanced slot mechanics, §14.4 advanced bonus and progression mechanics, §14.5 reel and symbol modifiers, §14.6 win calculation mechanics, §14.7 bonus and special round mechanics, §14.8 combination recipes, §14.9 cost and risk, §14.10 mechanic selection process, §14.11 mechanic spec card, §14.12 non-slot categories, §14.13 checklist, §14.14 stateful mechanics on other providers. Run the selection process (§14.10) inside the ideation process (§7.5); for Stake books check mechanic frequencies with `scripts/mechanic_stats.py`.

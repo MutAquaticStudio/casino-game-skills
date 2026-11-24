@@ -102,7 +102,7 @@ List every asset with its role before drawing. Role sets the detail level and th
 | High pay (theme objects/characters) | 4–5 | More detail, richer gradient, rim light |
 | Wild | 1 (+ variants) | Accent colour, glow, fills the cell |
 | Scatter / Bonus | 1–2 | Unique silhouette, distinct from Wild even in greyscale |
-| Specials from the concept (multiplier, coin, mystery) | per design | Follow the mechanic; show its value legibly |
+| Specials from the concept (multiplier, coin, mystery) | per design | Follow the mechanic; show its value legibly. The art each mechanic needs (stage variants, mega wild, sticky frame, meter parts…) is listed on its card in `stake-casino-game-dev/references/game-mechanics.md` |
 
 Every symbol needs the states the Pixi `SymbolView` uses (`idle | spin | land | win | dim`,
 see `stake-casino-game-dev` §12.3). Most states are code (blur, scale, tint, glow). **Win-state art (deliverable):**

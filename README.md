@@ -4,7 +4,7 @@ Bộ **Agent Skills** (định dạng `SKILL.md`) giúp Claude thiết kế, xâ
 
 | Skill | Dùng để |
 |---|---|
-| [`stake-casino-game-dev`](skills/stake-casino-game-dev/SKILL.md) | Quy trình đầy đủ: lên ý tưởng game có chiều sâu và nhiều mode, toán học (Math SDK, RTP, wincap), tích hợp RGS, frontend PixiJS/Three.js, win celebration chuẩn Stake, đa ngôn ngữ, replay, checklist nộp duyệt |
+| [`stake-casino-game-dev`](skills/stake-casino-game-dev/SKILL.md) | Quy trình đầy đủ: lên ý tưởng game có chiều sâu và nhiều mode, danh mục cơ chế game (cách trả thưởng, tumble, các loại wild, hệ số nhân, hold-and-win, biến thể free spins), toán học (Math SDK, RTP, wincap), tích hợp RGS, frontend PixiJS/Three.js, win celebration chuẩn Stake, đa ngôn ngữ, replay, checklist nộp duyệt |
 | [`casino-game-audit`](skills/casino-game-audit/SKILL.md) | Audit chất lượng: đồ hoạ, render, hiệu ứng, chuyển cảnh giữa các mode, giao diện cược, khoảng cách và font chữ, win celebration, âm thanh, đa ngôn ngữ. Chấm điểm và báo cáo lỗi theo thứ tự ưu tiên |
 | [`casino-audio-design`](skills/casino-audio-design/SKILL.md) | Thiết kế và lập trình âm thanh: nhạc base/bonus, hiệu ứng guồng quay, nhạc cấp thắng, mixing, Howler/Web Audio, brief cho người làm nhạc, kiểm tra âm thanh |
 | [`casino-symbol-art`](skills/casino-symbol-art/SKILL.md) | Tạo art 2D cho game slot: style guide, symbol (low/high pay, Wild, Scatter, Bonus, bài) dạng SVG nhiều layer, kiểm tra độ đọc được ở kích thước thật và popout, xuất spritesheet cho PixiJS v8, tách layer cho Spine, art win title/khung guồng/nền/icon, brief cho hoạ sĩ. Có ba hướng: SVG vẽ tay (kèm bộ hướng dẫn svg-design), art raster vẽ bằng code với hơn 80 phong cách (nền, màn win, symbol có texture), và **art tranh vẽ do mô hình tạo ảnh sinh từng lớp** (nền, nhân vật, khung, nền guồng, bộ symbol) rồi ghép bằng code, kèm nghiên cứu style Valkyrie Studio và Hacksaw Gaming |
@@ -74,6 +74,29 @@ Chấm điểm từng ý tưởng và chọn 1 để viết tài liệu thiết 
 Ý tưởng của tôi: slot 6x5 cluster pays chủ đề đại dương. Kiểm tra xem có bị nông không
 và đề xuất thêm tầng cơ chế, bậc thang mode.
 ```
+**Danh mục cơ chế game** (`references/game-mechanics.md`, mục 14): 81 cơ chế theo bảng phân loại iGaming 12 nhóm (reel, symbol, cách tính thắng, bonus, hệ số nhân, jackpot, risk, instant win, table game, live, multiplayer, meta-game). Mỗi cơ chế có hai cột trạng thái, cho **Stake Engine** và cho **provider khác**. Mỗi thẻ cơ chế có cách hoạt động, cách làm trong Math SDK, event, cách hiển thị, art và âm thanh cần đặt.
+
+**Hỏi provider trước.** Skill hỏi game làm cho provider/RGS nào và thị trường nào:
+- **Stake Engine:** lọc theo luật Stake, có ghi nguồn. ❌ **rule** là cấm theo tên trong docs (jackpot, gamble, continuation, early cashout). ⚠️ **arch** là hệ quả của mô hình không lưu trạng thái: dùng được ở dạng trong một lượt hoặc trong bonus. 💡 là khuyến nghị của skill, không phải luật Stake. ❓ là docs không nói tới, phải hỏi Stake (mines, crash, keno, table game, live, multiplayer).
+- **Provider khác:** dùng được mọi cơ chế. 🔧 đánh dấu cơ chế cần hỗ trợ từ nền tảng (lưu trạng thái theo người chơi và mức cược, server jackpot, vòng chơi nhiều request). ⚖️ đánh dấu cơ chế bị hạn chế ở một số thị trường. Hướng dẫn làm ở §14.14.
+- Nhóm cơ bản: Megaways (cơ chế dùng tự do; tên là thương hiệu, chỉ dùng khi có licence), Cluster, Cascade, Paylines, 243 Ways, Hold & Win, Free Spins, Pick & Win, các loại Wild.
+- Nhóm nâng cao: Mystery, Transformation, Sticky, Walking Wild, Shifting, Expanding Reels, Nudge, Collection, Progressive Multiplier, Feature Upgrade, Multi-stage Bonus, Feature Meter, Split.
+- Reel và symbol modifier: Reel Lock / Respins / Swap / Reorder, Sticky Reels, Hidden Reels, Split Reels, Bonus Reel, Symbol Upgrade / Downgrade / Merge / Evolution / Removal…, Random Wild, Mega Wild, Multi-Wild.
+- Cách tính thắng: trái sang phải, phải sang trái, hai chiều, adjacent, overlap, chỉ lấy thắng cao nhất, nhân theo số tổ hợp, Win Cap, Win Streak.
+- Bonus và vòng đặc biệt: Wheel, Ladder, Branching, Fusion, Bonus Buy, Bonus Choice (làm thành mode chọn trước), Survival, Countdown (đếm bằng lượt quay, không dùng đồng hồ)…
+- Trên Stake Engine phải đổi: Progressive/Bonus Jackpot, Gamble, cashout (❌ rule); tích lũy giữa các lượt, Persistent Progression (⚠️ arch). Với provider khác thì giữ nguyên, kèm yêu cầu nền tảng và luật thị trường.
+
+**Quy trình thiết kế đã nâng cấp** (`concept-design.md` §7.5): hỏi provider và thị trường → nhận brief → sàng lọc cơ chế theo cột của provider (Stake: đổi ❌/⚠️, hỏi ❓; provider khác: ghi yêu cầu 🔧 và thị trường ⚖️) → 3 concept từ công thức kết hợp → chấm điểm (có tiêu chí rủi ro tuân thủ) → concept doc có thẻ spec cho từng cơ chế và mục tiêu tần suất → cổng kiểm tra trước khi sang bước toán. Với Stake, `mechanic_stats.py` đo lại tần suất từng cơ chế trong book sau khi chạy toán.
+
+Câu hỏi mẫu:
+```
+Tôi muốn game có Megaways, Hold & Win, Progressive Jackpot và Feature Meter đầy thì ra Super Spin.
+Sàng lọc theo danh mục cơ chế, đổi những cái không dùng được, rồi đề xuất 3 concept.
+```
+```
+Khách muốn có jackpot Mini/Major/Grand. Stake Engine có cho không? Đề xuất cách thay thế.
+```
+
 Kết quả: tài liệu ý tưởng theo mẫu gồm các tầng cơ chế, chuỗi tác động, bảng mode, mục tiêu toán học, nhịp cảm xúc, danh sách sự kiện cần có và bước kiểm tra thiết kế có trách nhiệm.
 
 ### Bước 2 – Toán học (Math SDK)
@@ -90,6 +113,12 @@ python skills/stake-casino-game-dev/scripts/validate_math.py games/<game>/librar
 python skills/stake-casino-game-dev/scripts/validate_math.py <dir> --json report.json   # xuất báo cáo
 ```
 Script kiểm tra định dạng `index.json`, sự khớp giữa lookup table và books, RTP 90–98%, chênh lệch RTP giữa các mode ≤ 0.5%, tần suất max win (≥ 1/20 triệu), hit-rate, kết quả áp đảo, và khoảng trống trong dải tiền thắng.
+
+Kiểm tra mỗi cơ chế xuất hiện đúng tần suất mong muốn (tỷ lệ lượt chơi có từng loại event, theo trọng số lookup table), và event nào chưa có handler ở frontend:
+```sh
+python skills/stake-casino-game-dev/scripts/mechanic_stats.py games/<game>/library/publish_files
+python skills/stake-casino-game-dev/scripts/mechanic_stats.py <dir> --handlers handlers.txt   # mỗi dòng một event type đã xử lý
+```
 
 ### Bước 3 – Frontend
 Skill có mục riêng cho **PixiJS 8.22** (bản mới nhất, kiểm tra tháng 11/2026): các mẫu code v8 đúng chuẩn, kiến trúc game slot (guồng quay, symbol Spine, tumble, các lớp hiển thị), ngân sách hiệu năng trên điện thoại, các thay đổi từ 8.16 đến 8.22 dễ gây lỗi, và bộ 26 skill PixiJS chính thức đi kèm. Mục riêng cho Three.js dành cho game 3D.
@@ -326,12 +355,13 @@ Tóm tắt từ tài liệu chính thức (https://stakeengine.github.io/docs/) 
 ```
 skills/
 ├── stake-casino-game-dev/
-│   ├── SKILL.md                 quy trình 13 mục (ý tưởng, toán, frontend, win celebration, đa ngôn ngữ, PixiJS 8.22, Bet UI); mục 7, 8.3–8.5, 12, 13 có phần chi tiết trong references/
-│   ├── scripts/                 validate_math.py, check_social_terms.py, check_static_build.py,
+│   ├── SKILL.md                 quy trình 14 mục (ý tưởng, toán, frontend, win celebration, đa ngôn ngữ, PixiJS 8.22, Bet UI, cơ chế game); mục 7, 8.3–8.5, 12, 13, 14 có phần chi tiết trong references/
+│   ├── scripts/                 validate_math.py, check_social_terms.py, check_static_build.py, mechanic_stats.py,
 │   │                            mobile_layout.py, mobile_capture.mjs
 │   ├── assets/                  rgs-client.ts, book-player.ts
 │   └── references/
 │       ├── concept-design.md    §7: ý tưởng, thang mode, đòn bẩy gắn kết, mẫu concept doc
+│       ├── game-mechanics.md    §14: 81 cơ chế theo 12 nhóm, trạng thái trên Stake, cách thay thế, công thức kết hợp, quy trình chọn, thẻ spec
 │       ├── win-presentation.md  §8.3–8.5: màn win celebration, quy tắc hành vi, nhịp vòng chơi
 │       ├── pixi-slots.md        §12: PixiJS 8 cho slot Stake (kiến trúc, hiệu năng, ràng buộc)
 │       ├── bet-ui-hud.md        §13: thiết kế Bet UI / HUD, số đo, biến thể responsive

@@ -24,6 +24,8 @@ Build the concept as a **depth stack** and state how each layer amplifies the ot
 | 4. In-round meter | collect symbols during the round/bonus to unlock upgrades (bigger multipliers, extra rows, sticky wilds) – resets when the round ends, so it is stateless-safe |
 | 5. Bonus escalation | levels inside free spins, retriggers that add spins *and* upgrade, sticky elements that last until the bonus ends, a final "super" phase |
 
+Every mechanic for these layers is catalogued in `references/game-mechanics.md` (81 mechanics under a 12-category taxonomy, each with its Stake status: §14.0). Board modifiers include the reel and symbol modifiers (§14.5); the core pay comes with its win-calculation rules (§14.6); bonus escalation uses §14.7. Ready-made combinations: §14.8.
+
 For every concept write: the **interaction chain** (e.g. cascade → raises spot multiplier →
 multiplier also boosts the meter → meter unlocks a row → more ways → more cascades), the
 **common round** feel, the **typical bonus** feel, and the **dream path** to wincap. If you can't
@@ -90,20 +92,39 @@ Retention here should come from quality and variety. Reviewers rate polish and o
 manipulative patterns put both approval and players at risk.
 
 ### 7.5 Ideation process
-1. Generate **3 concepts with different depth signatures** (e.g. cascade + spot multipliers;
-   grid expansion + collection meter; walking wilds + transforms), each with a theme that
-   explains the mechanic (the fantasy should make the rules intuitive).
-2. Score each from 1 to 5 on: depth (layer interaction), readability, originality vs existing
-   slots, math feasibility, mobile/popout legibility, art/animation cost, and mode-ladder
-   potential. Recommend one and say why.
-3. Expand the chosen concept into the concept doc below.
+0. **Brief intake.** Ask first, if the brief does not say: **which provider / RGS** the game ships on (Stake Engine, the studio's own
+   RGS, another aggregator) and **which markets** (for Stake: Stake.com and/or stake.us social). Then theme, volatility, target RTP,
+   wincap ambition, scope (weeks, team), and the user's mechanic wish list in their own words. The provider decides which rules apply
+   from here on; §7.2 (mode ladder, bet modes) and §7.4 marked items are written for Stake Engine and are adapted for other providers.
+1. **Mechanic screening** (`references/game-mechanics.md` §14.10, steps 0–2). Tag each wished mechanic with its taxonomy category and
+   read the column for the chosen provider (§14.0).
+   - **Stake Engine:** replace ❌ rule with the listed alternative, rewrite ⚠️ arch into its stateless form, and ask Stake about ❓, all
+     *before* any concept is written (e.g. "Progressive Jackpot → Max Win tier + fixed 1000x coin"). If the product does not fit Stake
+     Engine (§14.12), say so now.
+   - **Other providers:** keep the mechanics; list the 🔧 platform needs (saved state, jackpot server, multi-request rounds) and the ⚖️
+     market restrictions (§14.14), and plan per-market variants.
+   Tell the user each change or requirement in one line, with its source (Stake rule, stateless architecture, skill recommendation,
+   platform, regulation).
+2. Generate **3 concepts with different depth signatures** from the screened list (recipes in §14.8, e.g. cascade engine; reel workshop;
+   coin vault), each with a theme that explains the mechanic (the fantasy should make the rules intuitive). Each concept names exactly one
+   core pay and its win-calculation rules (§14.1, §14.6).
+3. Score each from 1 to 5 on: depth (layer interaction), readability, originality vs existing
+   slots, math feasibility, mobile/popout legibility, art/animation cost (§14.9), mode-ladder
+   potential, and compliance risk (number of ⚠️ mechanics and how central they are). Recommend one and say why.
+4. Expand the chosen concept into the concept doc below, with one **mechanic spec card** per mechanic (§14.11).
+5. **Design gate** before Phase 2: every mechanic has a card, a reset point and a frequency target per mode; the event list is complete;
+   the base game has at most 3 active layers; the responsible-design check (§7.4) passes; the user has approved the mode ladder.
+   After the math runs, `scripts/mechanic_stats.py` compares the books with the frequency targets; a mechanic more than ~30% off its
+   target goes back to the math, or the target is changed in the concept doc with the reason.
 
 ### 7.6 Concept doc template
 ```
 # <Title> – <fantasy in one line>
 Core loop (1 sentence):
-Grid / pay type:
-Depth stack: layer | mechanic | feeds into
+Provider / RGS + target markets:
+Grid / pay type + win-calculation rules (direction, overlap, highest-only, scatter pays, wincap):
+Mechanic screening: wished mechanic | category (1–12) | status for the provider (Stake: ✅/⚠️ arch/❌ rule/❓/💡; other: ✅/🔧/⚖️) | what we build (instead) | platform needs | markets off
+Depth stack: layer | mechanic (# in game-mechanics.md §14.0) | feeds into
 Interaction chain + dream path to wincap:
 Base round feel / bonus feel / super bonus feel:
 Modes: name | cost | promise | changes vs base | RTP target | wincap | is_feature / is_buybonus
@@ -111,7 +132,9 @@ Round archetypes + target frequency per mode:
   dead spin, small win (< stake, neutral), win ≥ stake, chain/cascade, bonus trigger, big bonus, wincap
 Math targets: hit-rate, bonus 1-in-X per mode, P(bonus in 150 spins), RTP split base/free, volatility
 Engagement beats: anticipation → escalation → peak → release (per mode)
-Book events needed (standard + custom):
+Mechanic spec cards (game-mechanics.md §14.11), one per mechanic:
+Mechanic frequency targets: mechanic | mode | 1 in X rounds (checked later with mechanic_stats.py)
+Book events needed (standard + custom), derived from the cards:
 Rules text outline incl. worked example:
 Responsible-design check (7.4): pass / issues
 Risks + scope (math effort, readability at 400×225, asset count):
