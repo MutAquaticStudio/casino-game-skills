@@ -32,8 +32,8 @@ ever happen, RTP is fully determined by LUT weights. **Wincap** = max win per ro
 ## Hard restrictions (rejection if violated)
 - Stateless only: no jackpots, gamble features, continuation, early cashout.
 - Original game only – no pre-purchased/licensed games that exist elsewhere.
-- IP/copyright-clean team names, titles and assets. Title must be unique and must not use
-  terms like "Megaways" or "Xways".
+- IP/copyright-clean team names, titles and assets (the current docs state the general IP rule; earlier
+  notes also listed a unique title and no trademarked terms such as "Megaways"/"Xways" – still good practice).
 - No Stake™/Kick™ branding or themes in assets.
 - Nothing offensive, explicit, discriminatory or in poor taste; reviewer discretion.
 - Nothing that promotes or appeals to minors, including child-like characters.

@@ -74,15 +74,19 @@ Chấm điểm từng ý tưởng và chọn 1 để viết tài liệu thiết 
 Ý tưởng của tôi: slot 6x5 cluster pays chủ đề đại dương. Kiểm tra xem có bị nông không
 và đề xuất thêm tầng cơ chế, bậc thang mode.
 ```
-**Danh mục cơ chế game** (`references/game-mechanics.md`, mục 14): 81 cơ chế theo bảng phân loại iGaming 12 nhóm (reel, symbol, cách tính thắng, bonus, hệ số nhân, jackpot, risk, instant win, table game, live, multiplayer, meta-game). Mỗi cơ chế được đánh dấu ✅ dùng được, ⚠️ chỉ dùng ở dạng không lưu trạng thái, hoặc ❌ bị cấm trên Stake Engine kèm phương án thay thế. Mỗi thẻ cơ chế có cách hoạt động, cách làm trong Math SDK, event trong book, cách hiển thị, art và âm thanh cần đặt.
-- Nhóm cơ bản: Megaways (chỉ dùng cơ chế, không dùng tên), Cluster, Cascade, Paylines, 243 Ways, Hold & Win, Free Spins, Pick & Win, các loại Wild.
+**Danh mục cơ chế game** (`references/game-mechanics.md`, mục 14): 81 cơ chế theo bảng phân loại iGaming 12 nhóm (reel, symbol, cách tính thắng, bonus, hệ số nhân, jackpot, risk, instant win, table game, live, multiplayer, meta-game). Mỗi cơ chế có hai cột trạng thái, cho **Stake Engine** và cho **provider khác**. Mỗi thẻ cơ chế có cách hoạt động, cách làm trong Math SDK, event, cách hiển thị, art và âm thanh cần đặt.
+
+**Hỏi provider trước.** Skill hỏi game làm cho provider/RGS nào và thị trường nào:
+- **Stake Engine:** lọc theo luật Stake, có ghi nguồn. ❌ **rule** là cấm theo tên trong docs (jackpot, gamble, continuation, early cashout). ⚠️ **arch** là hệ quả của mô hình không lưu trạng thái: dùng được ở dạng trong một lượt hoặc trong bonus. 💡 là khuyến nghị của skill, không phải luật Stake. ❓ là docs không nói tới, phải hỏi Stake (mines, crash, keno, table game, live, multiplayer).
+- **Provider khác:** dùng được mọi cơ chế. 🔧 đánh dấu cơ chế cần hỗ trợ từ nền tảng (lưu trạng thái theo người chơi và mức cược, server jackpot, vòng chơi nhiều request). ⚖️ đánh dấu cơ chế bị hạn chế ở một số thị trường. Hướng dẫn làm ở §14.14.
+- Nhóm cơ bản: Megaways (cơ chế dùng tự do; tên là thương hiệu, chỉ dùng khi có licence), Cluster, Cascade, Paylines, 243 Ways, Hold & Win, Free Spins, Pick & Win, các loại Wild.
 - Nhóm nâng cao: Mystery, Transformation, Sticky, Walking Wild, Shifting, Expanding Reels, Nudge, Collection, Progressive Multiplier, Feature Upgrade, Multi-stage Bonus, Feature Meter, Split.
 - Reel và symbol modifier: Reel Lock / Respins / Swap / Reorder, Sticky Reels, Hidden Reels, Split Reels, Bonus Reel, Symbol Upgrade / Downgrade / Merge / Evolution / Removal…, Random Wild, Mega Wild, Multi-Wild.
 - Cách tính thắng: trái sang phải, phải sang trái, hai chiều, adjacent, overlap, chỉ lấy thắng cao nhất, nhân theo số tổ hợp, Win Cap, Win Streak.
 - Bonus và vòng đặc biệt: Wheel, Ladder, Branching, Fusion, Bonus Buy, Bonus Choice (làm thành mode chọn trước), Survival, Countdown (đếm bằng lượt quay, không dùng đồng hồ)…
-- Bị cấm hoặc phải đổi: Progressive/Bonus Jackpot, Gamble, Persistent Progression, tích lũy giữa các lượt, cashout, live, multiplayer.
+- Trên Stake Engine phải đổi: Progressive/Bonus Jackpot, Gamble, cashout (❌ rule); tích lũy giữa các lượt, Persistent Progression (⚠️ arch). Với provider khác thì giữ nguyên, kèm yêu cầu nền tảng và luật thị trường.
 
-**Quy trình thiết kế đã nâng cấp** (`concept-design.md` §7.5): nhận brief → sàng lọc cơ chế (phân nhóm, đánh trạng thái, đổi ❌/⚠️ trước khi viết concept) → 3 concept từ công thức kết hợp → chấm điểm (thêm tiêu chí rủi ro tuân thủ) → concept doc có thẻ spec cho từng cơ chế và mục tiêu tần suất → cổng kiểm tra trước khi sang bước toán. Sau khi chạy toán, `mechanic_stats.py` đo lại tần suất từng cơ chế trong book.
+**Quy trình thiết kế đã nâng cấp** (`concept-design.md` §7.5): hỏi provider và thị trường → nhận brief → sàng lọc cơ chế theo cột của provider (Stake: đổi ❌/⚠️, hỏi ❓; provider khác: ghi yêu cầu 🔧 và thị trường ⚖️) → 3 concept từ công thức kết hợp → chấm điểm (có tiêu chí rủi ro tuân thủ) → concept doc có thẻ spec cho từng cơ chế và mục tiêu tần suất → cổng kiểm tra trước khi sang bước toán. Với Stake, `mechanic_stats.py` đo lại tần suất từng cơ chế trong book sau khi chạy toán.
 
 Câu hỏi mẫu:
 ```

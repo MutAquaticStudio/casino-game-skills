@@ -7,7 +7,7 @@ of `StakeEngine/docs`). When reviewing a game, output a table: item | ✅/❌/�
 ## PreChecks
 - [ ] Game authenticates with RGS on launch
 - [ ] Bet button sends a successful play request
-- [ ] Title unique; no "Megaways", "Xways" or similar trademarked terms
+- [ ] Title, team name and assets IP-clean; no trademarked terms such as "Megaways"/"Xways" (general IP rule; not named in the March 2026 docs)
 - [ ] No offensive, discriminatory or inappropriate assets
 
 ## Game thumbnail (Tile Editor)

@@ -1,6 +1,6 @@
 ---
 name: "stake-casino-game-dev"
-description: "Ideate, build, balance, review and submit casino/slot games for Stake Engine: concept and mode ladder, game mechanics catalogue (81 mechanics in a 12-category taxonomy with Stake status and stateless alternatives), Math SDK, RGS API, PixiJS 8 and Three.js frontends, Bet UI with measured phone and desktop layouts, win celebrations and round timing rules, localization, approval checklist. Use for any Stake Engine slot task, from idea to submission."
+description: "Ideate, build, balance, review and submit casino/slot games for Stake Engine, with a provider gate so concept and mechanics work for other providers too: concept and mode ladder, game mechanics catalogue (81 mechanics in a 12-category taxonomy, with Stake Engine status and stateless alternatives plus platform and market notes for other providers), Math SDK, RGS API, PixiJS 8 and Three.js frontends, Bet UI with measured phone and desktop layouts, win celebrations and round timing rules, localization, approval checklist. Use for any Stake Engine slot task, from idea to submission."
 ---
 
 # Casino game development for Stake Engine
@@ -38,7 +38,7 @@ Consequences:
 
 ## 2. Hard restrictions (rejection)
 - Original game only; no pre-purchased/licensed games that exist elsewhere.
-- IP-clean names, titles, assets; title unique, no "Megaways"/"Xways"-type trademarks.
+- IP-clean names, titles, assets (no trademarked terms such as "Megaways"/"Xways"; the docs state the general IP rule).
 - No Stake™/Kick™ branding or themes. Unique art and audio – Web SDK sample assets are rejected.
 - Nothing offensive, explicit, discriminatory, in poor taste; nothing appealing to minors
   (incl. child-like characters). Reviewer discretion applies.
@@ -61,6 +61,12 @@ art → build. If a later step finds a problem owned by an earlier one (e.g. a t
 symbol unreadable at popout size), go back to that step and re-run its gate, do not patch around it.
 
 ### Phase 1 – Concept & compliance pre-check
+**Provider gate first.** Ask which provider/RGS the game ships on and for which markets, unless the brief says so. The concept, mechanics
+(§14), win presentation (§8), UI (§12–13), art and audio guidance work for any provider. **Stake Engine:** follow everything in this skill,
+filter mechanics with the Stake column of §14.0. **Another provider:** use the whole mechanics catalogue with its "Other providers" column
+(platform needs and market rules, `references/game-mechanics.md` §14.14), and swap the Stake-only parts (§1–2 restrictions, Math SDK,
+RGS API, social mode, approval checklist, Phases 2, 4, 5) for that provider's SDK, RGS and certification process.
+
 Design the concept with §7 (depth stack, full mode ladder, engagement beats, responsible-design
 check) – never stop at "spin → line win → done". Then pin down grid, theme, target RTP
 (90–98%), wincap, volatility, and screen against §2. Deliver the §7 concept doc. For "make me a
@@ -477,6 +483,8 @@ Use the patterns of live studio slots, not their look. The common thread is **si
 
 ## 14. Game mechanics catalogue
 
-The catalogue holds 81 mechanics under the studio's 12-category iGaming taxonomy (reel, symbol, win, bonus, multiplier, jackpot, risk, instant win, table, live, multiplayer, meta-game). Each one is marked ✅ allowed, ⚠️ allowed only in a stateless form, or ❌ not allowed on Stake Engine, with an alternative. The rule behind every status: a mechanic must start and end inside one round (one book line), come from the math, and never present a pre-computed result as the player's choice or skill. Jackpots, gamble/double-up, cashout, real-time countdowns, live and multiplayer play, and progress between rounds are not allowed.
+The catalogue holds 81 mechanics under the studio's 12-category iGaming taxonomy (reel, symbol, win, bonus, multiplier, jackpot, risk, instant win, table, live, multiplayer, meta-game). It starts with a **provider gate**: ask which provider/RGS and which markets the game is for.
+- **Stake Engine:** each mechanic is ✅, ❌ rule (named in the docs: jackpots, gamble, continuation, early cashout), ⚠️ arch (follows from the stateless model: no state between rounds, a player cannot affect the outcome; use the stateless form in the card), 💡 skill recommendation (not a Stake rule) or ❓ ask Stake (non-slot games the docs do not cover).
+- **Other providers:** every mechanic may be used; 🔧 marks those needing platform support (saved state per player and bet level, jackpot server, multi-request rounds) and ⚖️ those regulated in some markets. Implementation notes in §14.14.
 
-**Full detail in `references/game-mechanics.md`**: §14.0 taxonomy and master table, §14.1 core mechanics, §14.2 basic bonus and feature mechanics, §14.3 advanced slot mechanics, §14.4 advanced bonus and progression mechanics, §14.5 reel and symbol modifiers, §14.6 win calculation mechanics, §14.7 bonus and special round mechanics, §14.8 combination recipes, §14.9 cost and risk, §14.10 mechanic selection process, §14.11 mechanic spec card, §14.12 non-slot categories, §14.13 checklist. Run the selection process (§14.10) inside the ideation process (§7.5) and check mechanic frequencies in the books with `scripts/mechanic_stats.py`.
+**Full detail in `references/game-mechanics.md`**: provider gate and legends, §14.0 taxonomy and master table, §14.1 core mechanics, §14.2 basic bonus and feature mechanics, §14.3 advanced slot mechanics, §14.4 advanced bonus and progression mechanics, §14.5 reel and symbol modifiers, §14.6 win calculation mechanics, §14.7 bonus and special round mechanics, §14.8 combination recipes, §14.9 cost and risk, §14.10 mechanic selection process, §14.11 mechanic spec card, §14.12 non-slot categories, §14.13 checklist, §14.14 stateful mechanics on other providers. Run the selection process (§14.10) inside the ideation process (§7.5); for Stake books check mechanic frequencies with `scripts/mechanic_stats.py`.

@@ -92,12 +92,19 @@ Retention here should come from quality and variety. Reviewers rate polish and o
 manipulative patterns put both approval and players at risk.
 
 ### 7.5 Ideation process
-0. **Brief intake.** Theme, target market (Stake.com and/or stake.us social), volatility, target RTP, wincap ambition, scope (weeks,
-   team), and the user's mechanic wish list in their own words.
-1. **Mechanic screening** (`references/game-mechanics.md` §14.10, steps 1–2). Tag each wished mechanic with its taxonomy category and
-   status (§14.0). Replace ❌ with the listed alternative and rewrite ⚠️ into its stateless form *before* any concept is written, and tell
-   the user each change in one line (e.g. "Progressive Jackpot → Max Win tier + fixed 1000x coin"). Non-slot categories (6–12) go
-   through §14.12 first; if the product does not fit Stake Engine, say so now.
+0. **Brief intake.** Ask first, if the brief does not say: **which provider / RGS** the game ships on (Stake Engine, the studio's own
+   RGS, another aggregator) and **which markets** (for Stake: Stake.com and/or stake.us social). Then theme, volatility, target RTP,
+   wincap ambition, scope (weeks, team), and the user's mechanic wish list in their own words. The provider decides which rules apply
+   from here on; §7.2 (mode ladder, bet modes) and §7.4 marked items are written for Stake Engine and are adapted for other providers.
+1. **Mechanic screening** (`references/game-mechanics.md` §14.10, steps 0–2). Tag each wished mechanic with its taxonomy category and
+   read the column for the chosen provider (§14.0).
+   - **Stake Engine:** replace ❌ rule with the listed alternative, rewrite ⚠️ arch into its stateless form, and ask Stake about ❓, all
+     *before* any concept is written (e.g. "Progressive Jackpot → Max Win tier + fixed 1000x coin"). If the product does not fit Stake
+     Engine (§14.12), say so now.
+   - **Other providers:** keep the mechanics; list the 🔧 platform needs (saved state, jackpot server, multi-request rounds) and the ⚖️
+     market restrictions (§14.14), and plan per-market variants.
+   Tell the user each change or requirement in one line, with its source (Stake rule, stateless architecture, skill recommendation,
+   platform, regulation).
 2. Generate **3 concepts with different depth signatures** from the screened list (recipes in §14.8, e.g. cascade engine; reel workshop;
    coin vault), each with a theme that explains the mechanic (the fantasy should make the rules intuitive). Each concept names exactly one
    core pay and its win-calculation rules (§14.1, §14.6).
@@ -114,8 +121,9 @@ manipulative patterns put both approval and players at risk.
 ```
 # <Title> – <fantasy in one line>
 Core loop (1 sentence):
+Provider / RGS + target markets:
 Grid / pay type + win-calculation rules (direction, overlap, highest-only, scatter pays, wincap):
-Mechanic screening: wished mechanic | category (1–12) | status ✅/⚠️/❌ | what we build instead
+Mechanic screening: wished mechanic | category (1–12) | status for the provider (Stake: ✅/⚠️ arch/❌ rule/❓/💡; other: ✅/🔧/⚖️) | what we build (instead) | platform needs | markets off
 Depth stack: layer | mechanic (# in game-mechanics.md §14.0) | feeds into
 Interaction chain + dream path to wincap:
 Base round feel / bonus feel / super bonus feel:
