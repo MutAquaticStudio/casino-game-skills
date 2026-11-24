@@ -28,7 +28,7 @@ anticipation > reels > music > ambience).
 | Anticipation | riser/loop per reel (pitch up per extra scatter), scatter land 1/2/3 rising | Only when the book has `anticipation` |
 | Small wins | soft tick (< stake), short win ping (1–5x), line/cluster highlight ticks, HUD roll-up tick | Short, musical, no fanfare |
 | Win celebrations | **Big / Mega / Epic / Legendary / Max Win** stings, celebration roll-up loop, end "ka-ching" | Only ≥ Big Win; each tier adds a layer; Max Win uses the motif |
-| Features | feature trigger, free spins awarded, retrigger, multiplier up (stepped pitch), meter level-up, tumble drop, wild expand, transform | Pitch-step on chains = escalation |
+| Features | feature trigger, free spins awarded, retrigger, multiplier up (stepped pitch), meter level-up, tumble drop, wild expand, transform | Pitch-step on chains = escalation. One sound per mechanic in the concept's spec cards ("Assets" line, `stake-casino-game-dev/references/game-mechanics.md` §14.11) |
 | Bonus flow | intro transition, bonus summary, return to base | Crossfade music |
 | UI | click, hover (desktop), bet up/down (pitch follows value), toggle, modal open/close, soft error | Quiet and crisp |
 | Ambience | optional low world bed | Very low |

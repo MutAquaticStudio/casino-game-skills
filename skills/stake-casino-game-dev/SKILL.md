@@ -1,6 +1,6 @@
 ---
 name: "stake-casino-game-dev"
-description: "Ideate, build, balance, review and submit casino/slot games for Stake Engine: concept and mode ladder, game mechanics catalogue (pay types, tumble, wilds, multipliers, hold-and-win, free-spin variants, stateless alternatives), Math SDK, RGS API, PixiJS 8 and Three.js frontends, Bet UI with measured phone and desktop layouts, win celebrations and round timing rules, localization, approval checklist. Use for any Stake Engine slot task, from idea to submission."
+description: "Ideate, build, balance, review and submit casino/slot games for Stake Engine: concept and mode ladder, game mechanics catalogue (81 mechanics in a 12-category taxonomy with Stake status and stateless alternatives), Math SDK, RGS API, PixiJS 8 and Three.js frontends, Bet UI with measured phone and desktop layouts, win celebrations and round timing rules, localization, approval checklist. Use for any Stake Engine slot task, from idea to submission."
 ---
 
 # Casino game development for Stake Engine
@@ -186,7 +186,7 @@ if len(rtps) > 1:
 sys.exit(1 if fails else 0)
 ```
 Also eyeball win-range gaps in the PAR sheet. Check that each mechanic fires as often as the concept doc says:
-`python scripts/mechanic_stats.py <publish_files>` (share of rounds per event type, per mode; §14.12). Fix math failures before frontend work.
+`python scripts/mechanic_stats.py <publish_files>` (share of rounds per event type, per mode; §14.13). Fix math failures before frontend work.
 
 ### Phase 3 – Frontend
 The build must be **static** (HTML/CSS/JS + assets; SvelteKit → `adapter-static`; Vite →
@@ -477,6 +477,6 @@ Use the patterns of live studio slots, not their look. The common thread is **si
 
 ## 14. Game mechanics catalogue
 
-Every mechanic must start and end inside one round (one book line). Pick mechanics as layers of the depth stack (§7.1), give each one its events and a frontend handler, and offer a stateless alternative when a request needs memory between rounds (jackpots, gamble, cross-spin meters are not allowed).
+The catalogue holds 81 mechanics under the studio's 12-category iGaming taxonomy (reel, symbol, win, bonus, multiplier, jackpot, risk, instant win, table, live, multiplayer, meta-game). Each one is marked ✅ allowed, ⚠️ allowed only in a stateless form, or ❌ not allowed on Stake Engine, with an alternative. The rule behind every status: a mechanic must start and end inside one round (one book line), come from the math, and never present a pre-computed result as the player's choice or skill. Jackpots, gamble/double-up, cashout, real-time countdowns, live and multiplayer play, and progress between rounds are not allowed.
 
-**Full detail in `references/game-mechanics.md`**: §14.1 pay systems (lines, ways, variable reels, cluster, scatter pays, custom shapes), §14.2 board modifiers (tumble, wild types, mystery, transforms, split, grid growth, colossal, nudges), §14.3 multipliers, §14.4 hold-and-win, §14.5 free-spin and bonus structures (incl. pick bonuses on a pre-computed RGS), §14.6 in-round meters, §14.7 feature modes, §14.8 other game types, §14.9 forbidden mechanics and alternatives, §14.10 combination recipes, §14.11 cost and risk, §14.12 checklist. Check frequencies in the books with `scripts/mechanic_stats.py`.
+**Full detail in `references/game-mechanics.md`**: §14.0 taxonomy and master table, §14.1 core mechanics, §14.2 basic bonus and feature mechanics, §14.3 advanced slot mechanics, §14.4 advanced bonus and progression mechanics, §14.5 reel and symbol modifiers, §14.6 win calculation mechanics, §14.7 bonus and special round mechanics, §14.8 combination recipes, §14.9 cost and risk, §14.10 mechanic selection process, §14.11 mechanic spec card, §14.12 non-slot categories, §14.13 checklist. Run the selection process (§14.10) inside the ideation process (§7.5) and check mechanic frequencies in the books with `scripts/mechanic_stats.py`.

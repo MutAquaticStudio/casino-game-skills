@@ -74,16 +74,20 @@ Chấm điểm từng ý tưởng và chọn 1 để viết tài liệu thiết 
 Ý tưởng của tôi: slot 6x5 cluster pays chủ đề đại dương. Kiểm tra xem có bị nông không
 và đề xuất thêm tầng cơ chế, bậc thang mode.
 ```
-**Danh mục cơ chế game** (`references/game-mechanics.md`, mục 14): với mỗi cơ chế có cách hoạt động, cách làm trong Math SDK (game mẫu gần nhất), event trong book, cách hiển thị trên frontend và lỗi hay gặp. Gồm:
-- Cách trả thưởng: lines, ways, guồng đổi chiều cao, cluster, scatter pays, hình dạng tự thiết kế.
-- Biến đổi bàn quay: tumble, wild mở rộng, wild dính, wild di chuyển, wild có hệ số, mystery, biến đổi symbol, symbol nhân đôi, mở rộng lưới, symbol khổng lồ, nudge.
-- Hệ số nhân, hold-and-win, các biến thể free spins và vòng thưởng (pick, wheel, trail), thanh tích lũy trong lượt.
-- Bảng cơ chế bị cấm (jackpot, gamble, cashout sớm, tích lũy giữa các lượt) kèm phương án thay thế không cần lưu trạng thái.
-- 7 công thức kết hợp cơ chế, bảng chi phí và rủi ro, checklist cho từng cơ chế.
+**Danh mục cơ chế game** (`references/game-mechanics.md`, mục 14): 81 cơ chế theo bảng phân loại iGaming 12 nhóm (reel, symbol, cách tính thắng, bonus, hệ số nhân, jackpot, risk, instant win, table game, live, multiplayer, meta-game). Mỗi cơ chế được đánh dấu ✅ dùng được, ⚠️ chỉ dùng ở dạng không lưu trạng thái, hoặc ❌ bị cấm trên Stake Engine kèm phương án thay thế. Mỗi thẻ cơ chế có cách hoạt động, cách làm trong Math SDK, event trong book, cách hiển thị, art và âm thanh cần đặt.
+- Nhóm cơ bản: Megaways (chỉ dùng cơ chế, không dùng tên), Cluster, Cascade, Paylines, 243 Ways, Hold & Win, Free Spins, Pick & Win, các loại Wild.
+- Nhóm nâng cao: Mystery, Transformation, Sticky, Walking Wild, Shifting, Expanding Reels, Nudge, Collection, Progressive Multiplier, Feature Upgrade, Multi-stage Bonus, Feature Meter, Split.
+- Reel và symbol modifier: Reel Lock / Respins / Swap / Reorder, Sticky Reels, Hidden Reels, Split Reels, Bonus Reel, Symbol Upgrade / Downgrade / Merge / Evolution / Removal…, Random Wild, Mega Wild, Multi-Wild.
+- Cách tính thắng: trái sang phải, phải sang trái, hai chiều, adjacent, overlap, chỉ lấy thắng cao nhất, nhân theo số tổ hợp, Win Cap, Win Streak.
+- Bonus và vòng đặc biệt: Wheel, Ladder, Branching, Fusion, Bonus Buy, Bonus Choice (làm thành mode chọn trước), Survival, Countdown (đếm bằng lượt quay, không dùng đồng hồ)…
+- Bị cấm hoặc phải đổi: Progressive/Bonus Jackpot, Gamble, Persistent Progression, tích lũy giữa các lượt, cashout, live, multiplayer.
+
+**Quy trình thiết kế đã nâng cấp** (`concept-design.md` §7.5): nhận brief → sàng lọc cơ chế (phân nhóm, đánh trạng thái, đổi ❌/⚠️ trước khi viết concept) → 3 concept từ công thức kết hợp → chấm điểm (thêm tiêu chí rủi ro tuân thủ) → concept doc có thẻ spec cho từng cơ chế và mục tiêu tần suất → cổng kiểm tra trước khi sang bước toán. Sau khi chạy toán, `mechanic_stats.py` đo lại tần suất từng cơ chế trong book.
 
 Câu hỏi mẫu:
 ```
-Dùng danh mục cơ chế, đề xuất 3 tổ hợp cơ chế cho game 7x7 cluster chủ đề rừng nhiệt đới, kèm chuỗi tác động và event cần có.
+Tôi muốn game có Megaways, Hold & Win, Progressive Jackpot và Feature Meter đầy thì ra Super Spin.
+Sàng lọc theo danh mục cơ chế, đổi những cái không dùng được, rồi đề xuất 3 concept.
 ```
 ```
 Khách muốn có jackpot Mini/Major/Grand. Stake Engine có cho không? Đề xuất cách thay thế.
@@ -353,7 +357,7 @@ skills/
 │   ├── assets/                  rgs-client.ts, book-player.ts
 │   └── references/
 │       ├── concept-design.md    §7: ý tưởng, thang mode, đòn bẩy gắn kết, mẫu concept doc
-│       ├── game-mechanics.md    §14: danh mục cơ chế game, cơ chế bị cấm và cách thay thế, công thức kết hợp
+│       ├── game-mechanics.md    §14: 81 cơ chế theo 12 nhóm, trạng thái trên Stake, cách thay thế, công thức kết hợp, quy trình chọn, thẻ spec
 │       ├── win-presentation.md  §8.3–8.5: màn win celebration, quy tắc hành vi, nhịp vòng chơi
 │       ├── pixi-slots.md        §12: PixiJS 8 cho slot Stake (kiến trúc, hiệu năng, ràng buộc)
 │       ├── bet-ui-hud.md        §13: thiết kế Bet UI / HUD, số đo, biến thể responsive
